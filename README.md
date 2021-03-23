@@ -1,7 +1,7 @@
-# Global Reasoning over Database Structures for Text-to-SQL Parsing
+# SmBoP: Semi-autoregressive Bottom-up Semantic Parsing
 
 
-Author implementation of this [NAACL 2021 paper](https://arxiv.org/pdf/1908.11214.pdf).
+Author implementation of this [NAACL 2021 paper](https://arxiv.org/abs/2010.12412).
 
 ## Install & Configure
 
