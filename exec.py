@@ -4,7 +4,7 @@ import contextlib
 import sh
 import subprocess
 import pathlib
-from allennlp.commands.train import  train_model
+from allennlp.commands.train import train_model
 from allennlp.common import Params
 from dataset_readers.smbop import SmbopDatasetReader
 from models.semantic_parsing.smbop import SmbopParser

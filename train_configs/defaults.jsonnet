@@ -64,21 +64,21 @@ local max_instances = if misc_params.tiny_dataset then 400 else null;
 
 local devset_config = {
   cache_suffix :: "val", 
-  data_suffix :: "dev.json",
+  data_suffix :: "dev_processed_queries.json",
   limit_instances_val :: if misc_params.load_less then 200 else -1,
   limit_instances :: if misc_params.load_less then 200 else -1,
   
 };
 local trainset_config = {
   cache_suffix :: "train",
-  data_suffix :: "train_spider.json",
+  data_suffix :: "train_processed_queries.json",
   limit_instances :: -1,
   limit_instances_val :: -1,
 };
 
 
 
-local dataset_path = "dataset/";
+local dataset_path = "/Users/orlichter/Desktop/data/Processed/";
 
 
 
@@ -100,7 +100,7 @@ local dataset_reader_name = "smbop";
 {
   "dataset_reader": {
     "type": dataset_reader_name,
-    "tables_file": dataset_path + "tables.json",
+    "tables_file": dataset_path + "train_processed_tables.json",
     "dataset_path": dataset_path + "database",
     "lazy": false,
     "question_token_indexers":{
@@ -125,7 +125,7 @@ local dataset_reader_name = "smbop";
               
             },
       },
-    "tables_file": dataset_path + "tables.json",
+    "tables_file": dataset_path + "train_processed_tables.json",
     "dataset_path": dataset_path + "database",
     "cache_directory": setting.cache_path + setting.cache_suffix,
     "lazy": false,
@@ -134,7 +134,7 @@ local dataset_reader_name = "smbop";
     "limit_instances" : setting.limit_instances_val,
     "value_pred":misc_params.value_pred,
   },
-  "train_data_path": dataset_path + "train_spider.json",
+  "train_data_path": dataset_path + "train_processed_queries.json",
   "validation_data_path": dataset_path + setting.data_suffix,
 
   "model": {
