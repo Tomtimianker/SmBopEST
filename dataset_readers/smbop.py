@@ -271,8 +271,7 @@ class SmbopDatasetReader(DatasetReader):
             dill.dump(instances, cache)
 
 
-    def text_to_instance(
-        self, utterance: str, db_id: str, sql = None,sql_with_values = None):
+    def text_to_instance(self, utterance: str, db_id: str, sql = None,sql_with_values = None):
         fields: Dict[str, Field] = {
             "db_id":MetadataField(db_id),
         }
