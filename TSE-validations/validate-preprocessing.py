@@ -2,17 +2,20 @@ import dataset_readers.disamb_sql as disamb_sql
 import json
 from utils import moz_sql_parser as msp
 from utils import node_util
+from eval_final.evaluation import evaluate_single
 
 data_set = r'C:\Edan\NLP datasets\spider\spider\train_spider.json'
 tables_file = r'C:\Edan\NLP datasets\spider\spider\tables.json'
+db_dir = r'C:\Edan\NLP datasets\spider\spider\database'
 
 
-def validateSQLtoIR():
+def validateSQLtoIR(evaluation_function):
     """
     Goes over the dataset json example by example, preforms the exact same preprocessing as the model's data-reader
     which includes translation sql->IR->relationship algebra, and then reverses the process to validate we got back to
     an acceptable output.
     """
+    # read samples from the dataset - copied from dataset_readers\smbop.py _read_examples_file
     with open(data_set, "r") as data_file:
         json_obj = json.load(data_file)
         for total_cnt, ex in enumerate(json_obj):
@@ -33,21 +36,26 @@ def validateSQLtoIR():
                     # there are two examples in the train set that are wrongly formatted, skip them
                     print(f"error with {ex['query']}")
                     continue
-            # convert to IR
-            tree_dict = msp.parse(sql)
-            tree_dict_values = msp.parse(sql_with_values)
-            # convert to relationship algebra
+            # Convert to IR - copied from dataset_readers\smbop.py text_to_instance
+            try:
+                tree_dict = msp.parse(sql)
+            except msp.ParseException as e:
+                print(f"could'nt parse {sql}")
+                # return None
             tree_obj = node_util.get_tree(tree_dict["query"], None)
-            tree_obj_values = node_util.get_tree(tree_dict_values["query"], None)
-            # convert back to sql
-            recovered_sql = node_util.print_sql(tree_obj)
-            recovered_sql_values = node_util.print_sql(tree_obj_values)
-            # test that the query with values is identical to original
-            recovered_sql_values, original_query = fix_whitespace(recovered_sql_values, ex["query"])
-            if recovered_sql_values != original_query:
+
+            # convert back to sql, done as in models/semantic_parsing/smbop.py method _compute_validation_outputs
+            tree_res = node_util.remove_keep(tree_obj)
+            sql = node_util.print_sql(tree_res)
+            sql = node_util.fix_between(sql)
+            sql = sql.replace("LIMIT value", "LIMIT 1")
+            score = evaluation_function(g_str=sql_with_values, p_str=sql, db_id=ex["db_id"], db_dir=db_dir,
+                                        table_file=tables_file)
+            if score != 1:
                 print(f'Record {total_cnt} is not identical')
-                print(f'Got \n {recovered_sql_values}')
-                print(f'expected \n {original_query}')
+                print(f'Got \n {sql}')
+                print(f'expected \n {sql_with_values}')
+                print('************************************')
 
 
 def fix_whitespace(s, q):
@@ -60,5 +68,16 @@ def fix_whitespace(s, q):
     return s, q
 
 
+def evaluate_exact_string_match(recovered_sql_values, gold_query, total_cnt):
+    """
+    Primitive evaluation function that looks for exact string match.
+    """
+    recovered_sql_values, original_query = fix_whitespace(recovered_sql_values, gold_query)
+    if recovered_sql_values != original_query:
+        print(f'Record {total_cnt} is not identical')
+        print(f'Got \n {recovered_sql_values}')
+        print(f'expected \n {original_query}')
+
+
 if __name__ == '__main__':
-    validateSQLtoIR()
+    validateSQLtoIR(evaluate_single)
