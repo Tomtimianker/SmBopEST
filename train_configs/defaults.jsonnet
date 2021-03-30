@@ -71,7 +71,7 @@ local devset_config = {
 };
 local trainset_config = {
   cache_suffix :: "train",
-  data_suffix :: "train_spider.json",
+  data_suffix :: "train.json",
   limit_instances :: -1,
   limit_instances_val :: -1,
 };
