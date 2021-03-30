@@ -1,5 +1,5 @@
 from allennlp.data import DatasetReader, TokenIndexer
-from smbop import SmbopDatasetReader
+from dataset_readers.smbop import SmbopDatasetReader
 from eval_final.process_sql import tokenize
 from overrides import overrides
 from typing import Dict
