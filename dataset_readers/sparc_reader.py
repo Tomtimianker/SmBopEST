@@ -54,5 +54,6 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
                 example['db_id'] = dbid
                 example['query_toks_no_value'] = tokenize(example['db_id'])
                 example['question_toks'] = example.pop('utterance_toks')
+                example['question'] = example.pop('utterance')
                 yield i, example
                 i += 1
