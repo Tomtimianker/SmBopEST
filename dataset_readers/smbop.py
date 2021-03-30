@@ -190,6 +190,9 @@ class SmbopDatasetReader(DatasetReader):
         else:
             raise ConfigurationError(f"Don't know how to read filetype of {file_path}")
 
+    def enumerate_json(self, json_obj):
+        return enumerate(json_obj)
+
     def _read_examples_file(self, file_path: str):
         cache_dir = os.path.join("cache", file_path.split("/")[-1])
 
@@ -197,7 +200,7 @@ class SmbopDatasetReader(DatasetReader):
         time_dict = {}
         with open(file_path, "r") as data_file:
             json_obj = json.load(data_file)
-            for total_cnt, ex in enumerate(json_obj):
+            for total_cnt, ex in self.enumerate_json(json_obj):
                 total_start = time.time()
 
                 if total_cnt == self._max_instances:

@@ -78,7 +78,7 @@ local trainset_config = {
 
 
 
-local dataset_path = "dataset/";
+local dataset_path = "dataset/sparc";
 
 
 

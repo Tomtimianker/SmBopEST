@@ -410,8 +410,8 @@ class SmbopParser(Model):
         self._device = None
         self._evaluate_func = partial(
             evaluate_single,
-            db_dir=os.path.join("dataset", "database"),
-            table_file=os.path.join("dataset", "tables.json"),
+            db_dir=os.path.join("dataset/sparc", "database"),
+            table_file=os.path.join("dataset/sparc", "tables.json"),
         )
 
 
