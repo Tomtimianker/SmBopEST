@@ -95,7 +95,7 @@ local setting = large_setting + if misc_params.train_as_dev then trainset_config
 local should_rerank = misc_params.should_rerank;
 
 
-local dataset_reader_name = "smbop";
+local dataset_reader_name = "sparc-naive";
 
 {
   "dataset_reader": {
