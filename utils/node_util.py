@@ -627,7 +627,7 @@ def agg_check(in_dict):
                 )
                 node.val = in_dict[agg_type]["distinct"]
                 node.parent = distinct_type_node
-            elif sec_agg_type in ["add", "sub", "div", "mul"]:
+            elif sec_agg_type in ["add", "sub", "div", "mul", "eq", "like", "nlike", "nin", "lte", "lt", "neq", "in", "gte", "gt"]:
                 sec_agg_node = Node(sec_agg_type, parent=agg_type_node, n_type="Agg")
                 val1, val2 = in_dict[agg_type][sec_agg_type]
                 agg_check(val1).parent = sec_agg_node
