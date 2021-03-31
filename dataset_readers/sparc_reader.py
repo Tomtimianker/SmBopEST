@@ -52,7 +52,9 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
             examples = interaction['interaction']
             for example in examples:
                 example['db_id'] = dbid
-                example['query_toks_no_value'] = tokenize(example['db_id'])
+                tokenization = tokenize(example['db_id'])
+                example['query_toks'] = tokenization
+                example['query_toks_no_value'] = tokenization
                 example['question_toks'] = example.pop('utterance_toks')
                 example['question'] = example.pop('utterance')
                 yield i, example
