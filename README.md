@@ -15,7 +15,7 @@ Author implementation of this [NAACL 2021 paper](https://arxiv.org/abs/2010.1241
     
 3. Run this command to install NLTK punkt.
 ```
-python -c "import nltk; nltk.download('punkt')"
+python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
 ```
 
 4. Download the dataset from the [official Spider dataset website](https://yale-lily.github.io/spider)
