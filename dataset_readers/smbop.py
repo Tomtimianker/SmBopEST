@@ -223,13 +223,22 @@ class SmbopDatasetReader(DatasetReader):
                         # there are two examples in the train set that are wrongly formatted, skip them
                         print(f"error with {ex['query']}")
                         continue
-
-                ins = self.text_to_instance(
-                    utterance=ex["question"],
-                    db_id=ex["db_id"],
-                    sql=sql,
-                    sql_with_values=sql_with_values
-                )
+                try:
+                    ins = self.text_to_instance(
+                        utterance=ex["question"],
+                        db_id=ex["db_id"],
+                        sql=sql,
+                        sql_with_values=sql_with_values
+                    )
+                except Exception as e:
+                    print('*\n'*5)
+                    print(sql)
+                    if hasattr(e, 'message'):
+                        print(e.message)
+                    else:
+                        print(e)
+                    print('*\n'*5)
+                    continue
                 total_time = time.time()-total_start
                 time_dict[total_cnt]=total_time
                 if ins is not None:
@@ -248,12 +257,10 @@ class SmbopDatasetReader(DatasetReader):
             d = dill.load(cache_file)
             for i, x in enumerate(d):
                 if "orig_entities" not in x.fields:
-                    
                     db_id = x.fields["db_id"].metadata
                     entities_as_leafs = x.fields["entities"].metadata
                     orig_entites = [self.replacer.post(x,db_id) for x in entities_as_leafs]
                     x.fields["orig_entities"] = MetadataField(orig_entites)
-
                 if "depth" not in x.fields:
                     max_depth = max(
                         [leaf.depth for leaf in x.fields["tree_obj"].metadata.leaves]
@@ -283,7 +290,6 @@ class SmbopDatasetReader(DatasetReader):
 
         tokenized_utterance = self._tokenizer.tokenize(utterance)
         has_gold = sql is not None
-            
         if has_gold:
             try:
                 tree_dict = msp.parse(sql)
