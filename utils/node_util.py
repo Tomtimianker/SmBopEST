@@ -621,11 +621,11 @@ def agg_check(in_dict):
 
         if isinstance(in_dict[agg_type], dict):
             sec_agg_type = list(in_dict[agg_type].keys())[0]
-            if sec_agg_type in ["distinct"]:
+            if sec_agg_type in ["distinct", "count"]:
                 distinct_type_node = Node(
-                    "distinct", parent=agg_type_node, n_type="Agg"
+                    sec_agg_type, parent=agg_type_node, n_type="Agg"
                 )
-                node.val = in_dict[agg_type]["distinct"]
+                node.val = in_dict[agg_type][sec_agg_type]
                 node.parent = distinct_type_node
             elif sec_agg_type in ["add", "sub", "div", "mul", "eq", "like", "nlike", "nin", "lte", "lt", "neq", "in", "gte", "gt"]:
                 sec_agg_node = Node(sec_agg_type, parent=agg_type_node, n_type="Agg")
