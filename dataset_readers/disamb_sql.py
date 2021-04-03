@@ -17,14 +17,7 @@ from allennlp.common import JsonDict
 
 
 class TableColumn:
-    def __init__(
-        self,
-        name: str,
-        text: str,
-        column_type: str,
-        is_primary_key: bool,
-        foreign_key: Optional[str],
-    ):
+    def __init__(self, name: str, text: str, column_type: str, is_primary_key: bool, foreign_key: Optional[str]):
         self.name = name
         self.text = text
         self.column_type = column_type

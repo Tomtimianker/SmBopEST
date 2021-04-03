@@ -54,33 +54,16 @@ logger = logging.getLogger(__name__)
 
 @DatasetReader.register("smbop")
 class SmbopDatasetReader(DatasetReader):
-    def __init__(
-        self,
-        lazy: bool = True,
-        question_token_indexers: Dict[str, TokenIndexer] = None,
-        keep_if_unparsable: bool = True,
-        tables_file: str = None,
-        dataset_path: str = "dataset/database",
-        cache_directory: str = "cache/train",
-        include_table_name_in_column=True,
-        fix_issue_16_primary_keys=False,
-        qq_max_dist=2,
-        cc_max_dist=2,
-        tt_max_dist=2,
-        max_instances=None,
-        decoder_timesteps=9,
-        limit_instances=-1,
-        value_pred=True,
-        # **kwargs,
-    ):
-        super().__init__(
-            lazy=lazy,
-            cache_directory=cache_directory,
-            max_instances=max_instances,
-            #  manual_distributed_sharding=True,
-            # manual_multi_process_sharding=True,
-            #  **kwargs,
-        )
+    def __init__(self, lazy: bool = True, question_token_indexers: Dict[str, TokenIndexer] = None,
+                 keep_if_unparsable: bool = True, tables_file: str = None, dataset_path: str = "dataset/database",
+                 cache_directory: str = "cache/train", include_table_name_in_column=True, fix_issue_16_primary_keys=False,
+                 qq_max_dist=2, cc_max_dist=2, tt_max_dist=2, max_instances=None, decoder_timesteps=9, limit_instances=-1,
+                 value_pred=True,
+                 # **kwargs,
+                 ):
+        super().__init__( lazy=lazy, cache_directory=cache_directory, max_instances=max_instances,
+                          #  manual_distributed_sharding=True, manual_multi_process_sharding=True, **kwargs,
+                        )
         self.value_pred = value_pred
         self._decoder_timesteps = decoder_timesteps
         self._max_instances = max_instances
@@ -106,45 +89,12 @@ class SmbopDatasetReader(DatasetReader):
 
 
     def _create_action_dicts(self):
-        unary_ops = [
-            "keep",
-            "min",
-            "count",
-            "max",
-            "avg",
-            "sum",
-            "Subquery",
-            "distinct",
-            "literal",
-        ]
+        unary_ops = ["keep", "min", "count", "max", "avg", "sum", "Subquery", "distinct", "literal"]
         
-        binary_ops = [
-            "eq",
-            "like",
-            "nlike",
-            "add",
-            "sub",
-            "nin",
-            "lte",
-            "lt",
-            "neq",
-            "in",
-            "gte",
-            "gt",
-            "And",
-            "Or",
-            "except",
-            "union",
-            "intersect",
-            "Product",
-            "Val_list",
-            "Orderby_desc",
-            "Orderby_asc",
-            "Project",
-            "Selection",
-            "Limit",
-            "Groupby",
-        ]
+        binary_ops = ["eq", "like", "nlike", "add", "sub", "nin", "lte", "lt", "neq", "in", "gte", "gt", "And", "Or",
+                      "except", "union", "intersect", "Product", "Val_list", "Orderby_desc", "Orderby_asc", "Project",
+                      "Selection", "Limit", "Groupby",]
+
         self.binary_op_count = len(binary_ops)
         self.unary_op_count = len(unary_ops)
         self._op_names = [
@@ -205,7 +155,9 @@ class SmbopDatasetReader(DatasetReader):
                 sql = None
                 sql_with_values = None
                 
-    
+
+                # Here this is where he uses the DB.: we need: query_toks +
+                # Querytoks should be the same ans query toks and both should be suery_toks.
                 if "query_toks" in ex:
                     try:
                         ex = disamb_sql.fix_number_value(ex)
@@ -271,6 +223,7 @@ class SmbopDatasetReader(DatasetReader):
             dill.dump(instances, cache)
 
 
+    # TOM: pre process the query, (through the encoder.) this is where it goes tho RA
     def text_to_instance(
         self, utterance: str, db_id: str, sql = None,sql_with_values = None):
         fields: Dict[str, Field] = {
@@ -282,12 +235,15 @@ class SmbopDatasetReader(DatasetReader):
         has_gold = sql is not None
             
         if has_gold:
+            # Tom: Turn into IR
             try:
                 tree_dict = msp.parse(sql)
                 tree_dict_values = msp.parse(sql_with_values)
             except msp.ParseException as e:
                 print(f"could'nt parse {sql}")
                 return None
+
+            # Tom: Turn IR to RA
             tree_obj = node_util.get_tree(tree_dict["query"], None)
             tree_obj_values = node_util.get_tree(tree_dict_values["query"], None)
 
@@ -302,6 +258,7 @@ class SmbopDatasetReader(DatasetReader):
             if arit_list or haslist_list:
                 print(arit_list, haslist_list)
                 return None
+            # TOM: solves something he had a problem with.
             if self.value_pred:
                 for a,b in zip(tree_obj_values.leaves,tree_obj.leaves):
                     if b.name=="Table" or ("." in str(b.val)):

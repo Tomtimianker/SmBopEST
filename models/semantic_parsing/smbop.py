@@ -1024,6 +1024,7 @@ class SmbopParser(Model):
                     sql = node_util.print_sql(tree_res)
                     sql = node_util.fix_between(sql)
                     sql = sql.replace("LIMIT value","LIMIT 1")
+                    # TOM this is what we get eventually and should be the same.
 
                     
                 except:

@@ -919,7 +919,7 @@ def build_sql(tree, peren=True):
                 + build_sql(tree.children[0])
             )
 
-
+# TOM:  RA to  SQL. we might need to change it but it's not probable.
 def print_sql(tree):
     if tree:
         flat_tree = travel_tree(copy.deepcopy(tree))

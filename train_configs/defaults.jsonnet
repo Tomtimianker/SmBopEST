@@ -79,6 +79,7 @@ local trainset_config = {
 
 
 local dataset_path = "dataset/";
+# Tom: The place where the data should be.
 
 
 
