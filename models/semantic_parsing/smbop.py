@@ -759,11 +759,6 @@ class SmbopParser(Model):
             agenda_mask = leaf_schema_mask
             item_list.append(ZeroItem(agenda_types,final_leaf_indices,None,None,orig_entities,enc,self.tokenizer))
 
-        
-        
-        
-  
-        
         outputs['leaf_agenda_hash'] = agenda_hash
         enc_list = [self.tokenizer.decode(enc["tokens"]['token_ids'][b].tolist()) for b in range(batch_size)]
         decoding_step = 0
@@ -874,6 +869,7 @@ class SmbopParser(Model):
             agenda_scores_tensor = agenda_scores_tensor.masked_fill(~agenda_mask_tensor.bool(),
                                     ai2_util.min_value_of_dtype(agenda_scores_tensor.dtype))
             enriched_agenda_rep_tensor = torch.cat(enriched_agenda_rep_list, dim=1)
+        
         if self.should_rerank:
             
             if self.cntx_reranker:

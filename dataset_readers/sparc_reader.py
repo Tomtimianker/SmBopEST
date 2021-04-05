@@ -44,6 +44,7 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
             value_pred
         )
 
+    @staticmethod
     @overrides
     def enumerate_json(self, json_obj):
         i = 0
