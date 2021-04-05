@@ -68,8 +68,8 @@ def run():
     parser.add_argument("--temperature",default=1.0,type=float)
     parser.add_argument("--grad_clip",default=-1,type=float)
     parser.add_argument("--grad_norm",default=-1,type=float)
-    
-    
+
+
     default_dict = {k.option_strings[0][2:]:k.default for k in parser._actions}
     args = parser.parse_args()
     diff = "_".join([f"{key}{value}" for key,value in vars(args).items() if (key!="name" and value!= default_dict[key])])
@@ -129,7 +129,7 @@ def run():
         pass
     else:
         cntx = contextlib.nullcontext()
-    
+
     with cntx:
         train_model(
             params=settings,
