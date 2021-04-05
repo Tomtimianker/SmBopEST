@@ -158,7 +158,9 @@ class EncPreproc:
             orig_schema=self.schemas[db_id].orig,
         )
         
-        return self.preprocess_item(item, "train")        
+        return self.preprocess_item(item, "train")
+
+
     def compute_relations(
         self, desc, enc_length, q_enc_length, c_enc_length, c_boundaries, t_boundaries
     ):

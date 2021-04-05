@@ -289,6 +289,8 @@ class SmbopDatasetReader(DatasetReader):
                 
 
         tokenized_utterance = self._tokenizer.tokenize(utterance)
+        
+        # create the gold sql tree
         has_gold = sql is not None
         if has_gold:
             try:
@@ -344,7 +346,7 @@ class SmbopDatasetReader(DatasetReader):
                 "gold_sql" : MetadataField(sql_with_values),
                 "tree_obj": MetadataField(tree_obj),
             })
-            
+  
         desc = self.enc_preproc.get_desc(tokenized_utterance,db_id)
         entities, added_values, relation = self.extract_relation(desc)
         
