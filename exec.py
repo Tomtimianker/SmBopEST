@@ -6,7 +6,7 @@ import subprocess
 import pathlib
 from allennlp.commands.train import train_model
 from allennlp.common import Params
-from dataset_readers.smbop import SmbopDatasetReader
+from dataset_readers.wiki_sql_smbop import SmbopDatasetReader
 from models.semantic_parsing.smbop import SmbopParser
 from modules.relation_transformer import RelationTransformer
 from modules.lxmert import LxmertCrossAttentionLayer

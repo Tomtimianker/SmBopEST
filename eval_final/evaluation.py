@@ -882,7 +882,7 @@ def evaluate_single(g_str, p_str, db_id, db_dir,  table_file):
 
     kmaps = build_foreign_key_map_from_json(table_file)
     evaluator = Evaluator()
-    db = os.path.join(db_dir, db_id, db_id + ".sqlite")
+    db = db_dir
     schema = Schema(get_schema(db))
     g_sql = get_sql(schema, g_str)
 

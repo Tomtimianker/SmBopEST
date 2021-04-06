@@ -78,8 +78,7 @@ local trainset_config = {
 
 
 
-local dataset_path = "/Users/orlichter/Desktop/data/Processed/";
-
+local dataset_path = "/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/Processed/";
 
 
 local d_frontier = 30;

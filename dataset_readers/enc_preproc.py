@@ -140,13 +140,13 @@ class EncPreproc:
         print("before load_trees")
         self.schemas, self.eval_foreign_key_maps = self.load_tables([self._tables_file])
         print("before connecting")
+        sqlite_path = Path('/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/train.db')
+        source: sqlite3.Connection
+        with sqlite3.connect(sqlite_path) as source:
+            dest = sqlite3.connect(":memory:")
+            dest.row_factory = sqlite3.Row
+            source.backup(dest)
         for db_id, schema in self.schemas.items():
-            sqlite_path = Path('/Users/orlichter/Desktop/data/train.db')
-            source: sqlite3.Connection
-            with sqlite3.connect(sqlite_path) as source:
-                dest = sqlite3.connect(":memory:")
-                dest.row_factory = sqlite3.Row
-                source.backup(dest)
             schema.connection = dest
             
     def get_desc(self, tokenized_utterance, db_id):

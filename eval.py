@@ -12,7 +12,7 @@ import json
 from allennlp.common import Params
 from models.semantic_parsing.smbop import SmbopParser
 from modules.lxmert import LxmertCrossAttentionLayer
-from dataset_readers.smbop import SmbopDatasetReader
+from dataset_readers.wiki_sql_smbop import SmbopDatasetReader
 import itertools
 import utils.node_util as node_util
 import numpy as np
@@ -44,7 +44,7 @@ def main():
     
     overrides = {"dataset_reader":{"tables_file":args.table_path,"dataset_path":args.dataset_path}}
     overrides["validation_dataset_reader"] = {"tables_file":args.table_path,"dataset_path":args.dataset_path}
-    predictor = Predictor.from_path(args.archive_path,cuda_device=args.gpu,overrides=overrides)
+    predictor = Predictor.from_path(args.archive_path, cuda_device=args.gpu, overrides=overrides)
     print("after pred")
 
     with open(args.output,"w") as g:
