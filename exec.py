@@ -130,6 +130,7 @@ def run():
         cntx = contextlib.nullcontext()
     
     with cntx:
+
         train_model(
             params=settings,
             serialization_dir=f"{prefix}experiments/{experiment_name}",
