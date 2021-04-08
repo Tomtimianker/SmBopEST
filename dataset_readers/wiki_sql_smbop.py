@@ -230,6 +230,7 @@ class SmbopDatasetReader(DatasetReader):
                     )
                 except Exception as e:
                     print(f'**** Could not parse {sql} ****')
+                    continue
                 if ins == None:
                     err_cnt +=1
                     print(f"Error Count: {err_cnt}")
