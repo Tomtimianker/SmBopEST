@@ -582,7 +582,10 @@ class SmbopParser(Model):
         hash_gold_tree=None,
         span_hash=None,
         is_gold_span = None,
-        
+        # values added to support tree copying: #TREECOPY
+        prev_gold_span = None,
+        major: None,
+        minor: None,
     ):
         
         total_start = time.time()
@@ -615,20 +618,32 @@ class SmbopParser(Model):
         bce_vector_loss = torch.tensor(
             [0] * batch_size, dtype=torch.float32, device=self._device
         )
-        # tree_sizes_vector = torch.tensor(
-        #     [0] * batch_size, dtype=torch.float32, device=self._device
-        # )
 
         tree_sizes_vector = torch.tensor(
             [1] * batch_size, dtype=torch.float32, device=self._device
         )
         if hash_gold_levelorder is not None:
             new_hash_gold_levelorder = hash_gold_levelorder.sort()[0].transpose(0,1)
+        
+        # Logic to determine which spans in the utterance contain values to be included in query.
         if self.value_pred:
             span_scores,start_logits,end_logits = self.score_spans(embedded_utterance,utterance_mask)
+            ######################
+            #TREECOPY
+            # TODO: Need to add the tree copy logic (As we get previous values for free).
+            # Get the correct spans (from gold values if in train, or from previous work if in eval), return nothing if this is the first interaction in session.
+            # Add these span scores to the previously calculated values, so that they will be selected in the top k leafs we start constructing trees on.
+            # Note that these selections won't affect the loss calculated as it is determined by the start_logits, end_logits which I don't touch.
+            # We raise the top number of values to 15 (from 10) so that this forcing won't hurt the model.
+            # Hashing will be done automatically for us.
+            prev_gold_span = self.get_prev_gold_span(prev_gold_span)
+            if prev_gold_span:
+                batch_idx,start_idx,end_idx = prev_gold_span.nonzero().t()
+                final_span_scores[batch_idx,start_idx,end_idx] = ai2_util.max_value_of_dtype(final_span_scores.dtype)
+                num_values = 15
+            ######################
             span_mask = torch.isfinite(span_scores).bool()
             final_span_scores = span_scores.clone()
-            # if span_hash is not None:
             delta = final_span_scores.shape[-1]-span_hash.shape[-1]
             span_hash = torch.nn.functional.pad(
                 span_hash,
@@ -636,6 +651,8 @@ class SmbopParser(Model):
                 mode="constant",
                 value=-1,
             )
+
+            # compute loss on value prediction.
             if self.training:
                 is_gold_span = torch.nn.functional.pad(is_gold_span,
                     pad=(0, delta,0,delta),
@@ -644,12 +661,6 @@ class SmbopParser(Model):
                 )
                 batch_idx,start_idx,end_idx = is_gold_span.nonzero().t()
                 final_span_scores[batch_idx,start_idx,end_idx] = ai2_util.max_value_of_dtype(final_span_scores.dtype)
-                #TODO : replace with the next line
-                # final_span_scores = final_span_scores.masked_fill(is_gold_span,ai2_util.max_value_of_dtype(final_span_scores.dtype))
-                # is_span_start = torch.zeros_like(utterance_mask,device=self._device,dtype=torch.float)
-                # is_span_end = torch.zeros_like(utterance_mask,device=self._device,dtype=torch.float)
-                # is_span_start[batch_idx,start_idx]=1
-                # is_span_end[batch_idx,end_idx]=1
                 
                 is_span_end = is_gold_span.sum(-2).float()
                 is_span_start = is_gold_span.sum(-1).float()
@@ -663,22 +674,10 @@ class SmbopParser(Model):
                 
             else:
                 final_span_scores = span_scores
-            ten = 10
-            # if not self.is_oracle:
-                
-            # else:
-            #     ten = is_gold_span.sum(-1).float().sum(-1).int()
-            top_input, leaf_span_mask, best_spans = util.masked_topk(final_span_scores.view([batch_size,-1]),span_mask.view([batch_size,-1]),ten)
+
+            top_input, leaf_span_mask, best_spans = util.masked_topk(final_span_scores.view([batch_size,-1]),span_mask.view([batch_size,-1]),num_values)
             span_start_indices = best_spans // utterance_length
             span_end_indices = best_spans % utterance_length
-
-                
-                # assert is_gold_span is not None
-                
-                # span_start_indices, span_end_indices =  get_span_indices(is_gold_span,Kdiv2=ten)
-                # leaf_span_mask = (span_start_indices>=0)
-            
-
 
             start_span_rep = allennlp.nn.util.batched_index_select(
                 embedded_utterance.contiguous(), span_start_indices
@@ -690,7 +689,9 @@ class SmbopParser(Model):
             leaf_span_rep = span_rep
             leaf_span_hash = allennlp.nn.util.batched_index_select(span_hash.reshape([batch_size,-1,1]),  best_spans).reshape([batch_size,-1])
             leaf_span_types = torch.where(leaf_span_mask,self._type_dict["Value"],self._type_dict["nan"]).int()
+        
 
+        # Logic to determine which schema constants (table, column names).
         leaf_schema_scores = self._rank_schema(embedded_schema)
         leaf_schema_scores = leaf_schema_scores/self.temperature
         if is_gold_leaf is not None:
@@ -701,6 +702,8 @@ class SmbopParser(Model):
                 value=0,
             )
 
+        # Compute loss on schema ranking.
+        # TODO: Add the tree copying logic here (As we get previous trees for free).
         if self.training:
             final_leaf_schema_scores = leaf_schema_scores.clone()
             if not self.is_oracle:
@@ -727,7 +730,6 @@ class SmbopParser(Model):
                                                             mask=schema_mask.bool(),k=min_k)
 
         if self.is_oracle :
-            
             leaf_indices = torch.nn.functional.pad(
                 leaf_indices,
                 pad=(0, self.n_schema_leafs - leaf_indices.size(-1)),
@@ -761,7 +763,6 @@ class SmbopParser(Model):
 
         outputs['leaf_agenda_hash'] = agenda_hash
         enc_list = [self.tokenizer.decode(enc["tokens"]['token_ids'][b].tolist()) for b in range(batch_size)]
-        decoding_step = 0
 
         for decoding_step in range(self._decoder_timesteps):
             batch_size, seq_len, _ = agenda_rep.shape
@@ -777,13 +778,6 @@ class SmbopParser(Model):
                 enriched_agenda_rep = agenda_rep
             if self.cntx_rep:
                 agenda_rep = enriched_agenda_rep.contiguous()
-            # encoder_input = torch.cat([embedded_utterance, agenda_rep], dim=1)
-            # agenda_sum = self.summrize_agenda(enriched_agenda_rep,agenda_mask.bool()).squeeze(1)
-            # self.summrize_vec(0)
-            # agenda_sum = self._pooler(enriched_agenda_rep,agenda_mask.bool())
-            # depth_scores = self._score_depth(agenda_sum)
-            # depth_loss += self.xent(depth_scores,depth_counter)
-
             
             frontier_scores, frontier_mask = self.score_frontier(enriched_agenda_rep,agenda_rep,agenda_mask)
             frontier_scores = frontier_scores/self.temperature
@@ -1268,3 +1262,8 @@ class SmbopParser(Model):
             out["leafs_acc"] = self._leafs_acc.get_metric(reset)
             # out['self._spider_acc._count'] = self._spider_acc._count
         return out
+
+    # TODO: Add gold span logic for evaluation
+    #TREECOPY
+    def get_prev_gold_span(self, prev_is_gold_span):
+        return prev_is_gold_span

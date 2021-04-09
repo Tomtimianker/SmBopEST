@@ -143,7 +143,7 @@ local dataset_reader_name = "sparc-naive";
     "d_frontier":d_frontier,
     "agenda_size" : stringToInt("agenda_size"),
      
-     "decoder_timesteps" : 9,
+    "decoder_timesteps" : 9,
     "misc_params": misc_params,
     "question_embedder": {
         "token_embedders":{
@@ -207,6 +207,8 @@ local dataset_reader_name = "sparc-naive";
     },
   },
   "validation_data_loader": {
+    // TODO: create a custom data loader, or batch sampler that can make sure that all batches contain elements for which all dependancies have been fulfilled
+    // #TREECOPY
     "batch_size" : 20,
     "shuffle": true,
   },

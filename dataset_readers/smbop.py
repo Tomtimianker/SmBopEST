@@ -195,9 +195,14 @@ class SmbopDatasetReader(DatasetReader):
 
     def _read_examples_file(self, file_path: str):
         cache_dir = os.path.join("cache", file_path.split("/")[-1])
-
         cnt = 0
-        time_dict = {}
+
+        # Build cache for golden trees for all of the previous examples in this session.
+        # This is done by keeping an array of all the previous trees in this session (as there can be at most 6).
+        # Once we start reading from an example in a different interaction, we free current trees.
+        current_major = None
+        tree_cache = [None] * 6
+
         with open(file_path, "r") as data_file:
             json_obj = json.load(data_file)
             for total_cnt, ex in self.enumerate_json(json_obj):
@@ -208,7 +213,6 @@ class SmbopDatasetReader(DatasetReader):
                 sql = None
                 sql_with_values = None
                 
-    
                 if "query_toks" in ex:
                     try:
                         ex = disamb_sql.fix_number_value(ex)
@@ -228,7 +232,9 @@ class SmbopDatasetReader(DatasetReader):
                         utterance=ex["question"],
                         db_id=ex["db_id"],
                         sql=sql,
-                        sql_with_values=sql_with_values
+                        sql_with_values=sql_with_values,
+                        ex["major"],
+                        ex["minor"]
                     )
                 except Exception as e:
                     print('*\n'*5)
@@ -239,8 +245,10 @@ class SmbopDatasetReader(DatasetReader):
                         print(e)
                     print('*\n'*5)
                     continue
-                total_time = time.time()-total_start
-                time_dict[total_cnt]=total_time
+
+                # add tree cache to this instance and update current tree in cache.
+                
+
                 if ins is not None:
                     yield ins
                 
@@ -282,14 +290,24 @@ class SmbopDatasetReader(DatasetReader):
 
 
     def text_to_instance(
-        self, utterance: str, db_id: str, sql = None,sql_with_values = None):
+        self, utterance: str, db_id: str, sql = None, sql_with_values = None, major = 0, minor = 0):
         fields: Dict[str, Field] = {
             "db_id":MetadataField(db_id),
         }
-                
 
         tokenized_utterance = self._tokenizer.tokenize(utterance)
         
+        #TREECOPY
+        global prev_gold_spans
+        global prev_major
+        # if this is the first interaction in sequence, clear history regarding previous results (used in tree coping)
+        if minor == 0:
+            prev_gold_spans = ArrayField(np.full(len(tokenized_utterance), True), padding_value=False, dtype=np.bool)
+            prev_major = major
+        else:
+            # make sure that we are enriching this example with data from same session
+            assert major == prev_major
+
         # create the gold sql tree
         has_gold = sql is not None
         if has_gold:
@@ -417,6 +435,9 @@ class SmbopDatasetReader(DatasetReader):
             value_list = np.array([self.hash_text(x) for x in get_literals(tree_obj)], dtype=np.int64)
             is_gold_span = np.isin(span_hash_array.reshape([-1]),value_list).reshape([utt_len,utt_len])
             fields["is_gold_span"] = ArrayField(is_gold_span, padding_value=False, dtype=np.bool)
+            # enriching each example with gold spans #TREECOPY
+            fields["prev_gold_span"] = prev_gold_span
+            prev_gold_span = fields["is_gold_span"]
 
         enc_field_list = []
         offsets = []
@@ -447,6 +468,10 @@ class SmbopDatasetReader(DatasetReader):
         fields["enc"] = TextField(enc_field_list, self._utterance_token_indexers)
         # fields["world"] = MetadataField(world)
         
+        # add sample metadata (Number of session and place in interaction to this example) #TREECOPY
+        fields["major"] = LabelField(major, skip_indexing = True)
+        fields["minor"] = LabelField(minor, skip_indexing = True)
+
         ins = Instance(fields)
         return ins
 

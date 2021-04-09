@@ -50,9 +50,9 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
         Enumerates the sparc dataset file, such that each question contains the previous utterances also made.
         """
         i = 0
-        for interaction in json_obj:
-            dbid = interaction['database_id']
-            examples = interaction['interaction']
+        for major, session in enumerate(json_obj):
+            dbid = session['database_id']
+            examples = session['interaction']
             if not examples: # there are a few wierd examples in the set which are empty
                 continue
             # Want to join all utterances in sequence and add history to each single question.
@@ -64,7 +64,7 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
             for k in range(1, len(lengths)):
                 lengths[k] += lengths[k - 1]
             lengths[-1] -= 1
-            for j, example in enumerate(examples):
+            for minor, example in enumerate(examples):
                 example['db_id'] = dbid
                 tokenization = tokenize(example['query'])
                 # ; causes exeptions
@@ -73,6 +73,8 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
                 example['query_toks'] = tokenization
                 example['query_toks_no_value'] = tokenization
                 # example['question_toks'] = example.pop('utterance_toks')
-                example['question'] = question_sequence[:lengths[j]] # slice the sequence to get current question and all previous.
+                example['question'] = question_sequence[:lengths[minor]] # slice the sequence to get current question and all previous.
+                example['major'] = major
+                example['minor'] = minor
                 yield i, example
                 i += 1
