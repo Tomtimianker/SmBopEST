@@ -124,7 +124,7 @@ local dataset_reader_name = "smbop";
               
             },
       },
-    "tables_file": dataset_path + "train_processed_tables.json",
+    "tables_file": dataset_path + "dev_processed_tables.json",
     "dataset_path": dataset_path + "database",
     "cache_directory": setting.cache_path + setting.cache_suffix,
     "lazy": false,
