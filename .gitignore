@@ -4,6 +4,7 @@
 /cache
 /experiments/
 /prev_experiments/
+/select-experiments/
 *.pyc
 **/pyc
 */.ipynb_checkpoints/*

@@ -308,6 +308,7 @@ def reconstruct_tree(op_names,binary_op_count,batch_el,idx,items,cnt,num_schema_
             end_id = items[cnt].span_end_indices[batch_el][span_idx]
             tuple_el.val = items[cnt].tokenizer.decode(enc_tokens[start_id:end_id+1]).strip()
     return tuple_el
+
 # TODO: class method of the new node class
 def tuple2tree(in_dict):
     if not in_dict is None:

@@ -71,6 +71,7 @@ class SmbopDatasetReader(DatasetReader):
         decoder_timesteps=9,
         limit_instances=-1,
         value_pred=True,
+        is_dev = False,
         # **kwargs,
     ):
         super().__init__(
@@ -81,6 +82,10 @@ class SmbopDatasetReader(DatasetReader):
             # manual_multi_process_sharding=True,
             #  **kwargs,
         )
+
+        #TREECOPY
+        self.is_dev = is_dev
+
         self.value_pred = value_pred
         self._decoder_timesteps = decoder_timesteps
         self._max_instances = max_instances
@@ -299,14 +304,13 @@ class SmbopDatasetReader(DatasetReader):
         
         #TREECOPY
         global prev_gold_span
+        global prev_gold_leaf
         global prev_major
         # if this is the first interaction in sequence, clear history regarding previous results (used in tree coping)
-        if minor == 0:
-            prev_gold_span = ArrayField(np.full(len(tokenized_utterance) - 2, True), padding_value=False, dtype=np.bool) # reducing 2 for <S> and </S>
+        if minor == 0 or major != prev_major:
+            prev_gold_span = None # will fix as empty array later.
+            prev_gold_leaf = ArrayField(np.full(1, 0), padding_value=0, dtype=np.int32)
             prev_major = major
-        else:
-            # make sure that we are enriching this example with data from same session
-            assert major == prev_major
 
         # create the gold sql tree
         has_gold = sql is not None
@@ -342,18 +346,10 @@ class SmbopDatasetReader(DatasetReader):
                         parent_node.name = "Value"
                         parent_node.val = b.val
             
-
             for leaf in tree_obj.leaves:
                 leaf.val = self.replacer.pre(leaf.val,db_id)
                 if not self.value_pred and node_util.is_number(leaf.val):
                     leaf.val = "value"
-            #     if not self.value_pred and node_util.is_number(leaf.val):
-            #         parent_node = leaf.parent
-            #         parent_node.children = []
-            #         parent_node.name = "Value"
-            #         parent_node.val = "value"
-                    
-                
 
             leafs = list(set(node_util.get_leafs(tree_obj)))
             hash_gold_levelorder, hash_gold_tree = self._init_fields(tree_obj)
@@ -415,28 +411,36 @@ class SmbopDatasetReader(DatasetReader):
             entities_as_leafs_types, padding_value=self._type_dict["nan"], dtype=np.int32
             )
 
+        # TREECOPY
+        if self.is_dev:
+            fields["entities_as_leafs"] = 
+        
         if has_gold:
             leaf_indices, is_gold_leaf, depth = self.is_gold_leafs(tree_obj, leafs, schema_size, entities_as_leafs)
             fields.update({
-                "is_gold_leaf" :ArrayField(is_gold_leaf,padding_value=0,dtype=np.int32),
-                "leaf_indices" : ArrayField(leaf_indices, padding_value=-1, dtype=np.int32),
+                "is_gold_leaf": ArrayField(is_gold_leaf,padding_value=0,dtype=np.int32),
+                "leaf_indices": ArrayField(leaf_indices, padding_value=-1, dtype=np.int32),
                 "depth": ArrayField(depth,padding_value=0,dtype=np.int32),
             })
+            #TREECOPY
+            fields["prev_gold_leaf"] = prev_gold_leaf
+            prev_gold_leaf = fields["is_gold_leaf"]
 
 
         utt_len = len(tokenized_utterance[1:-1])
         if self.value_pred:
             span_hash_array = self.hash_spans(tokenized_utterance)
         
-            #I don't have to save this.....
-            fields["span_hash"] = ArrayField(span_hash_array, padding_value=-1, dtype=np.int64)
-        
+            if self.is_dev:
+                fields["span_hash"] = ArrayField(span_hash_array, padding_value=-1, dtype=np.int64)
+                fields["utt_len"] = LabelField(utt_len, skip_indexing = True)
+
         if has_gold and self.value_pred:
             value_list = np.array([self.hash_text(x) for x in get_literals(tree_obj)], dtype=np.int64)
             is_gold_span = np.isin(span_hash_array.reshape([-1]),value_list).reshape([utt_len,utt_len])
             fields["is_gold_span"] = ArrayField(is_gold_span, padding_value=False, dtype=np.bool)
             # enriching each example with gold spans #TREECOPY
-            fields["prev_gold_span"] = prev_gold_span
+            fields["prev_gold_span"] = prev_gold_span if prev_gold_span is not None else ArrayField(np.zeros_like(is_gold_span), padding_value=False, dtype=np.bool)
             prev_gold_span = fields["is_gold_span"]
 
         enc_field_list = []
@@ -466,7 +470,6 @@ class SmbopDatasetReader(DatasetReader):
             np.array(offsets), padding_value=0, dtype=np.int32
         )
         fields["enc"] = TextField(enc_field_list, self._utterance_token_indexers)
-        # fields["world"] = MetadataField(world)
         
         # add sample metadata (Number of session and place in interaction to this example) #TREECOPY
         fields["major"] = LabelField(major, skip_indexing = True)

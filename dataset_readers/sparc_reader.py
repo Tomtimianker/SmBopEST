@@ -72,7 +72,6 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
                     tokenization = tokenization[:-1]
                 example['query_toks'] = tokenization
                 example['query_toks_no_value'] = tokenization
-                # example['question_toks'] = example.pop('utterance_toks')
                 example['question'] = question_sequence[:lengths[minor]] # slice the sequence to get current question and all previous.
                 example['major'] = major
                 example['minor'] = minor
