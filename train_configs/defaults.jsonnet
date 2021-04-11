@@ -69,12 +69,13 @@ local devset_config = {
   limit_instances :: if misc_params.load_less then 200 else -1,
   
 };
-local trainset_config = {
+local trainset_config = {k
   cache_suffix :: "train",
   data_suffix :: "train_processed_queries.json",
   limit_instances :: -1,
   limit_instances_val :: -1,
 };
+
 
 
 
