@@ -135,7 +135,7 @@ def wiki_2_spider_tables(wiki_tables_path: Path, prefix: str):
             output_dict['column_types'] = table_dict.get('types')
             output_dict['table_names'] = [table_id_2_name(table_dict.get('id'))]
             output_dict['table_names_original'] = output_dict['table_names']
-            output_dict['db_id'] = output_dict['table_names'][0]
+            output_dict['db_id'] = prefix
             output_dict['primary_keys'] = []
             output_dict['foreign_keys'] = []
             final_tables_json.append(output_dict)
@@ -159,15 +159,14 @@ def wiki_2_spider_sql(wiki_path: Path, wiki_tables_path: Path, prefix: str):
     output_json = []
     with open(wiki_tables_path, 'rb') as tables_file:
         tables = json.load(tables_file)
-    tables_dict = {}
-    for table in tables:
-        tables_dict[table['db_id']] = table
+    tables_dict = {}    for table in tables:
+        tables_dict[table['table_names'][0]] = table
     with open(wiki_path, 'rb') as wiki_queries:
         for line in tqdm(wiki_queries.readlines()):
             output_dict = {}
             query_dict = json.loads(line)
             output_dict['question'] = query_dict['question']
-            output_dict['db_id'] = table_id_2_name(query_dict['table_id'])
+            output_dict['db_id'] = prefix
             output_dict['query'] = parse_sql(query_dict['sql'], table_id_2_name(query_dict['table_id']), tables_dict)
             output_dict['query_toks'] = tokenize(output_dict['query'], True)
             output_dict['query_toks_no_value'] = output_dict['query_toks']
@@ -185,4 +184,4 @@ def wiki_2_spider(wiki_path: Path, wiki_tables_path: Path, prefix: str):
 
 if __name__ == '__main__':
     train_or_dev = 'dev'
-    wiki_2_spider(Path(f'/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/{train_or_dev}.jsonl'), Path(f'/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/{train_or_dev}.tables.jsonl'), train_or_dev)
+    wiki_2_spider(Path(f'/Users/orlichter/Documents/School/Extra Courses/NLP/SmBopEST/wikisql_dataset/{train_or_dev}.jsonl'), Path(f'/Users/orlichter/Documents/School/Extra Courses/NLP/SmBopEST/wikisql_dataset/{train_or_dev}.tables.jsonl'), train_or_dev)
