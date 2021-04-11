@@ -1041,20 +1041,17 @@ class SmbopParser(Model):
                 outputs["total_time"] = [kwargs['total_time']]
 
                 if hash_gold_tree is not None:
-                    try:
-                        reranker_acc = int(
-                            kwargs["agenda_hash_tensor"][b][top_idx]== int(hash_gold_tree[b])
-                        )
+                    reranker_acc = int(
+                        kwargs["agenda_hash_tensor"][b][top_idx] == int(hash_gold_tree[b])
+                    )
 
-                        gold_sql = kwargs["gold_sql"][b]
-                        db_id = kwargs["db_id"][b]
-                        spider_acc = int(
-                            self._evaluate_func(
-                                gold_sql, sql, db_id
-                            )
+                    gold_sql = kwargs["gold_sql"][b]
+                    db_id = kwargs["db_id"][b]
+                    spider_acc = int(
+                        self._evaluate_func(
+                            gold_sql, sql, db_id
                         )
-                    except:
-                        print("fuck")
+                    )
 
                 reranker_acc_list.append(reranker_acc)
                 self._reranker_acc(reranker_acc)
