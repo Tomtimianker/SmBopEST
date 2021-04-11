@@ -159,7 +159,8 @@ def wiki_2_spider_sql(wiki_path: Path, wiki_tables_path: Path, prefix: str):
     output_json = []
     with open(wiki_tables_path, 'rb') as tables_file:
         tables = json.load(tables_file)
-    tables_dict = {}    for table in tables:
+    tables_dict = {}
+    for table in tables:
         tables_dict[table['table_names'][0]] = table
     with open(wiki_path, 'rb') as wiki_queries:
         for line in tqdm(wiki_queries.readlines()):
@@ -183,5 +184,5 @@ def wiki_2_spider(wiki_path: Path, wiki_tables_path: Path, prefix: str):
 
 
 if __name__ == '__main__':
-    train_or_dev = 'dev'
-    wiki_2_spider(Path(f'/Users/orlichter/Documents/School/Extra Courses/NLP/SmBopEST/wikisql_dataset/{train_or_dev}.jsonl'), Path(f'/Users/orlichter/Documents/School/Extra Courses/NLP/SmBopEST/wikisql_dataset/{train_or_dev}.tables.jsonl'), train_or_dev)
+    train_or_dev = 'test'
+    wiki_2_spider(Path(f'/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/{train_or_dev}.jsonl'), Path(f'/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/{train_or_dev}.tables.jsonl'), train_or_dev)
