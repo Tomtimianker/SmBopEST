@@ -991,19 +991,18 @@ class SmbopParser(Model):
                 final_beam_acc_list.append(bool(acc))
 
         if not self.training:
-            
-            
-            if kwargs['is_gold_leaf'] is not None  and kwargs['top_agenda_indices'] is not None:
+
+            if kwargs['is_gold_leaf'] is not None and kwargs['top_agenda_indices'] is not None:
                 for top_agenda_indices_el, is_gold_leaf_el in zip(
-                    kwargs["top_agenda_indices"], kwargs["is_gold_leaf"]
+                        kwargs["top_agenda_indices"], kwargs["is_gold_leaf"]
                 ):
                     is_gold_leaf_idx = is_gold_leaf_el.nonzero().squeeze().tolist()
-                    if not isinstance(is_gold_leaf_idx, list):
-                        is_gold_leaf_idx = is_gold_leaf_idx.tolist()
-                    if not isinstance(top_agenda_indices_el, list ):
-                        top_agenda_indices_el = top_agenda_indices_el.tolist()
                     print(f'is_gold_leaf_idx: {is_gold_leaf_idx}')
                     print(f'top_agenda_indices_el: {top_agenda_indices_el}')
+                    if isinstance(is_gold_leaf_idx, int):
+                        is_gold_leaf_idx = [is_gold_leaf_idx]
+                    if not isinstance(top_agenda_indices_el, list):
+                        top_agenda_indices_el = top_agenda_indices_el.tolist()
                     leaf_acc = int(
                         all([x in top_agenda_indices_el for x in is_gold_leaf_idx])
                     )
