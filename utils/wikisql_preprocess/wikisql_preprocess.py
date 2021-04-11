@@ -135,7 +135,7 @@ def wiki_2_spider_tables(wiki_tables_path: Path, prefix: str):
             output_dict['column_types'] = table_dict.get('types')
             output_dict['table_names'] = [table_id_2_name(table_dict.get('id'))]
             output_dict['table_names_original'] = output_dict['table_names']
-            output_dict['db_id'] = prefix
+            output_dict['db_id'] = prefix + '_' + output_dict['table_names'][0]
             output_dict['primary_keys'] = []
             output_dict['foreign_keys'] = []
             final_tables_json.append(output_dict)
@@ -167,7 +167,7 @@ def wiki_2_spider_sql(wiki_path: Path, wiki_tables_path: Path, prefix: str):
             output_dict = {}
             query_dict = json.loads(line)
             output_dict['question'] = query_dict['question']
-            output_dict['db_id'] = prefix
+            output_dict['db_id'] = prefix + '_' + table_id_2_name(query_dict['table_id'])
             output_dict['query'] = parse_sql(query_dict['sql'], table_id_2_name(query_dict['table_id']), tables_dict)
             output_dict['query_toks'] = tokenize(output_dict['query'], True)
             output_dict['query_toks_no_value'] = output_dict['query_toks']
@@ -184,5 +184,5 @@ def wiki_2_spider(wiki_path: Path, wiki_tables_path: Path, prefix: str):
 
 
 if __name__ == '__main__':
-    train_or_dev = 'test'
+    train_or_dev = 'train'
     wiki_2_spider(Path(f'/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/{train_or_dev}.jsonl'), Path(f'/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/{train_or_dev}.tables.jsonl'), train_or_dev)
