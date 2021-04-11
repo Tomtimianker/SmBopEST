@@ -184,5 +184,5 @@ def wiki_2_spider(wiki_path: Path, wiki_tables_path: Path, prefix: str):
 
 
 if __name__ == '__main__':
-    train_or_dev = 'train'
+    train_or_dev = 'test'
     wiki_2_spider(Path(f'/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/{train_or_dev}.jsonl'), Path(f'/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/{train_or_dev}.tables.jsonl'), train_or_dev)
