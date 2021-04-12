@@ -412,8 +412,8 @@ class SmbopDatasetReader(DatasetReader):
             )
 
         # TREECOPY
-        if self.is_dev:
-            fields["entities_as_leafs"] = 
+        # if self.is_dev:
+        #    fields["entities_as_leafs"] = 
         
         if has_gold:
             leaf_indices, is_gold_leaf, depth = self.is_gold_leafs(tree_obj, leafs, schema_size, entities_as_leafs)
