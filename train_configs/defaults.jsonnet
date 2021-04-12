@@ -71,7 +71,7 @@ local devset_config = {
 };
 local trainset_config = {
   cache_suffix :: "train",
-  data_suffix :: "train_spider.json",
+  data_suffix :: "geo_to_run_data1.json",
   limit_instances :: -1,
   limit_instances_val :: -1,
 };
@@ -135,7 +135,7 @@ local dataset_reader_name = "smbop";
     "limit_instances" : setting.limit_instances_val,
     "value_pred":misc_params.value_pred,
   },
-  "train_data_path": dataset_path + "train_spider.json",
+  "train_data_path": dataset_path + "geo_to_run_data1.json",
   "validation_data_path": dataset_path + setting.data_suffix,
 
   "model": {
