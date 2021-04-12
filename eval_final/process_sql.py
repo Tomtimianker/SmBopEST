@@ -85,6 +85,7 @@ def get_schema(db):
     """
 
     schema = {}
+    print(db)
     conn = sqlite3.connect(db)
     cursor = conn.cursor()
 
