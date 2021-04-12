@@ -3,11 +3,12 @@ from dataset_readers.smbop import SmbopDatasetReader
 from eval_final.process_sql import tokenize
 from overrides import overrides
 from typing import Dict
+from collections import defaultdict
 import json
 
 
 @DatasetReader.register("sparc-naive-dev")
-class SparcNaiveDatasetReader(SmbopDatasetReader):
+class SparcDevNaiveDatasetReader(SmbopDatasetReader):
     def __init__(
             self,
             lazy: bool = True,
@@ -41,7 +42,8 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
             max_instances,
             decoder_timesteps,
             limit_instances,
-            value_pred
+            value_pred,
+            is_dev = True
         )
 
     @overrides
@@ -50,6 +52,7 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
         Enumerates the sparc dataset file, such that each question contains the previous utterances also made.
         """
         i = 0
+        cache = defaultdict(lambda: []) # used to order the examples so no two queries from same sequence will be batched together.
         for major, session in enumerate(json_obj):
             dbid = session['database_id']
             examples = session['interaction']
@@ -64,6 +67,13 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
             for k in range(1, len(lengths)):
                 lengths[k] += lengths[k - 1]
             lengths[-1] -= 1
+            # dispatch all delayed elements
+            queue = cache.pop(i, [])
+            while queue:
+                yield i, queue.pop(0)
+                i += 1
+                queue += cache.pop(i, [])
+            interaction_length = len(examples)
             for minor, example in enumerate(examples):
                 example['db_id'] = dbid
                 tokenization = tokenize(example['query'])
@@ -75,5 +85,13 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
                 example['question'] = question_sequence[:lengths[minor]] # slice the sequence to get current question and all previous.
                 example['major'] = major
                 example['minor'] = minor
-                yield i, example
-                i += 1
+                example['interaction_length'] = interaction_length
+                if minor == 0:
+                    yield i, example
+                    i += 1
+                else:
+                    cache[i + minor * 30].append(example)
+        # check we didn't leave any items behind
+        for example in cache.items():
+            yield i, example
+            i += 1

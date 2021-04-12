@@ -96,6 +96,7 @@ local should_rerank = misc_params.should_rerank;
 
 
 local dataset_reader_name = "sparc-naive";
+local dev_dataset_reader_name = "sparc-naive-dev";
 
 {
   "dataset_reader": {
@@ -117,12 +118,11 @@ local dataset_reader_name = "sparc-naive";
     "value_pred":misc_params.value_pred,
   },
   "validation_dataset_reader": {
-    "type": dataset_reader_name,
+    "type": dev_dataset_reader_name,
     "question_token_indexers":{
             "tokens":{
               "type":"pretrained_transformer",
               "model_name":setting.model_name,
-              
             },
       },
     "tables_file": dataset_path + "tables.json",

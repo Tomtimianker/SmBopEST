@@ -596,6 +596,7 @@ class SmbopParser(Model):
         minor = None,
         utt_len = None,
         num_leafs = None,
+        interaction_length = None
     ):
         
         total_start = time.time()
@@ -951,7 +952,8 @@ class SmbopParser(Model):
                 utt_len = utt_len,
                 major = major,
                 minor = minor,
-                num_leafs = num_leafs
+                num_leafs = num_leafs,
+                interaction_length = interaction_length
             )
             return outputs
 
@@ -1045,22 +1047,24 @@ class SmbopParser(Model):
                     #TREECOPY
                     # Added logic to reconstruct tree to automatically monitor the schema leafs used in this tree.
                     # we will just need to cache the returned value.
-                    chosen_leaf_mask = np.zeros(kwargs["num_leafs"][b])
+                    is_tree_last_in_session = kwargs["interaction_length"][b] == kwargs["minor"][b] + 1
+                    chosen_leaf_mask = np.zeros(kwargs["num_leafs"][b]) if not is_tree_last_in_session else None # No need to calculate for last tree
                     tree_res = node_util.reconstruct_tree(self._op_names,self.binary_op_count, b, top_idx%self._agenda_size, items, len(items)-1, self.n_schema_leafs, chosen_leaf_mask)
 
-                    # cache the schema leafs that are predicted in this tree to be used in following queries.
-                    self.prev_leaf_cache[kwargs["major"][b]] = (kwargs["minor"][b], chosen_leaf_mask)
+                    if not is_tree_last_in_session:
+                        # cache the schema leafs that are predicted in this tree to be used in following queries.
+                        self.prev_leaf_cache[kwargs["major"][b]] = (kwargs["minor"][b], chosen_leaf_mask)
 
-                    # TREECOPY
-                    # TODO: check if better to do like the schema leafs.
-                    # parse output sql so we can pass the predicted leaf values to next phases.
-                    value_list = np.array([self.hash_text(x) for x in get_literals(tree_res)], dtype=np.int64)
-                    is_gold_span = np.isin(kwargs["span_hash"][b].reshape([-1]),value_list).reshape([kwargs["utt_len"][b], kwargs["utt_len"][b]])
-                    predicted_spans = ArrayField(is_gold_span, padding_value=False, dtype=np.bool)
-                    self.prev_span_cache[kwargs["major"][b]] = (kwargs["minor"][b], predicted_spans) # cache the predicted span values.
+                        # TREECOPY
+                        # TODO: check if better to do like the schema leafs.
+                        # parse output sql so we can pass the predicted leaf values to next phases.
+                        value_list = np.array([self.hash_text(x) for x in get_literals(tree_res)], dtype=np.int64)
+                        is_gold_span = np.isin(kwargs["span_hash"][b].reshape([-1]),value_list).reshape([kwargs["utt_len"][b], kwargs["utt_len"][b]])
+                        predicted_spans = ArrayField(is_gold_span, padding_value=False, dtype=np.bool)
+                        self.prev_span_cache[kwargs["major"][b]] = (kwargs["minor"][b], predicted_spans) # cache the predicted span values.
 
-                    #TREECOPY
-                    #TODO: Add the tree hashes logic here.
+                        #TREECOPY
+                        #TODO: Add the tree hashes logic here.
 
                     tree_res = node_util.remove_keep(tree_res)
                     # tree_res = self.replacer.post(tree)
@@ -1334,11 +1338,14 @@ def create_batch(major, minor, cache):
     spans = []
     # get the previously predicted leafs for each example in batch
     for maj, mi in zip(major, minor):
-        if minor == 0:
+        if minor == 0 or maj not in cache:
             spans.append(np.zeros(1))
+            if maj not in cache:
+                print(f'cache miss major:{maj}, minor {mi}')
         else:
-            prev_minor, single_prev_is_gold_span = cache[maj]
-            assert prev_minor == mi - 1
+            prev_minor, single_prev_is_gold_span = cache.pop(maj)
+            if prev_minor != mi - 1:
+                single_prev_is_gold_span = np.zeros(1)
             spans.append(single_prev_is_gold_span)
     # stack the samples in the sequence and pad them all to the same length
     return stack_padding(spans)

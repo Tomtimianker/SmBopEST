@@ -239,7 +239,8 @@ class SmbopDatasetReader(DatasetReader):
                         sql=sql,
                         sql_with_values=sql_with_values,
                         major = ex["major"],
-                        minor = ex["minor"]
+                        minor = ex["minor"],
+                        interaction_length = ex["interaction_length"] if self.is_dev else None
                     )
                 except Exception as e:
                     print('*\n'*5)
@@ -295,7 +296,7 @@ class SmbopDatasetReader(DatasetReader):
 
 
     def text_to_instance(
-        self, utterance: str, db_id: str, sql = None, sql_with_values = None, major = 0, minor = 0):
+        self, utterance: str, db_id: str, sql = None, sql_with_values = None, major = 0, minor = 0, interaction_length = 0):
         fields: Dict[str, Field] = {
             "db_id":MetadataField(db_id),
         }
@@ -311,6 +312,12 @@ class SmbopDatasetReader(DatasetReader):
             prev_gold_span = None # will fix as empty array later.
             prev_gold_leaf = ArrayField(np.full(1, 0), padding_value=0, dtype=np.int32)
             prev_major = major
+
+        # add sample metadata (Number of session and place in interaction to this example) #TREECOPY
+        fields["major"] = LabelField(major, skip_indexing = True)
+        fields["minor"] = LabelField(minor, skip_indexing = True)
+        if self.is_dev:
+            fields["interaction_length"] = LabelField(interaction_length, skip_indexing = True)
 
         # create the gold sql tree
         has_gold = sql is not None
@@ -419,7 +426,7 @@ class SmbopDatasetReader(DatasetReader):
             fields.update({
                 "is_gold_leaf": ArrayField(is_gold_leaf,padding_value=0,dtype=np.int32),
                 "leaf_indices": ArrayField(leaf_indices, padding_value=-1, dtype=np.int32),
-                "depth": ArrayField(depth,padding_value=0,dtype=np.int32),
+                "depth": ArrayField(depth,padding_value=0,dtype=np.int32)
             })
             #TREECOPY
             fields["prev_gold_leaf"] = prev_gold_leaf
@@ -469,10 +476,6 @@ class SmbopDatasetReader(DatasetReader):
             np.array(offsets), padding_value=0, dtype=np.int32
         )
         fields["enc"] = TextField(enc_field_list, self._utterance_token_indexers)
-        
-        # add sample metadata (Number of session and place in interaction to this example) #TREECOPY
-        fields["major"] = LabelField(major, skip_indexing = True)
-        fields["minor"] = LabelField(minor, skip_indexing = True)
 
         ins = Instance(fields)
         return ins
