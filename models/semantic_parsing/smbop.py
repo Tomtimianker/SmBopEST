@@ -1004,6 +1004,7 @@ class SmbopParser(Model):
                     leaf_acc = int(
                         all([x in top_agenda_indices_el for x in is_gold_leaf_idx])
                     )
+                    logging.info(leaf_acc)
                     leaf_acc_list.append(leaf_acc)
                     self._leafs_acc(leaf_acc)
 
