@@ -8,3 +8,4 @@
 **/pyc
 */.ipynb_checkpoints/*
 __pycache__
+/select-experiments/
