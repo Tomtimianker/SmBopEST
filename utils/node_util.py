@@ -278,7 +278,7 @@ def fix_between(inp):
     inp = re.sub(r"LIKE '([\s|\S]+?)'", r"LIKE '%\1%'", inp)
     return inp
 
-def reconstruct_tree(op_names,binary_op_count,batch_el,idx,items,cnt,num_schema_leafs):
+def reconstruct_tree(op_names, binary_op_count, batch_el, idx, items, cnt, num_schema_leafs, chosen_leaf_mask = None):
     type_data = int(items[cnt].curr_type[batch_el][idx])
     # tuple_el = [op_names[type_data]]
     tuple_el = Node(op_names[type_data])
@@ -287,19 +287,23 @@ def reconstruct_tree(op_names,binary_op_count,batch_el,idx,items,cnt,num_schema_
             l_idx = items[cnt].l_child_idx[batch_el][idx]
             r_idx = items[cnt].r_child_idx[batch_el][idx]
 
-            l_child = reconstruct_tree(op_names,binary_op_count,batch_el,l_idx,items,cnt-1,num_schema_leafs)
-            r_child = reconstruct_tree(op_names,binary_op_count,batch_el,r_idx,items,cnt-1,num_schema_leafs)
+            l_child = reconstruct_tree(op_names,binary_op_count,batch_el,l_idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask)
+            r_child = reconstruct_tree(op_names,binary_op_count,batch_el,r_idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask)
             # tuple_el.append([l_child,r_child])
             tuple_el.children = [l_child,r_child]
         else:
             idx = items[cnt].l_child_idx[batch_el][idx]
-            child = reconstruct_tree(op_names,binary_op_count,batch_el,idx,items,cnt-1,num_schema_leafs)
+            child = reconstruct_tree(op_names,binary_op_count,batch_el,idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask)
             # tuple_el.append([child])
             tuple_el.children = [child]
     else: 
-        if idx<num_schema_leafs:
+        if idx < num_schema_leafs:
             entities = items[cnt].entities[batch_el]
             entity_idx = items[cnt].final_leaf_indices[batch_el][idx]
+            #TREECOPY
+            # Mark that the specific schema leaf was chosen.
+            if chosen_leaf_mask is not None:
+                chosen_leaf_mask[entity_idx] = 1
             tuple_el.val = entities[entity_idx]
         else:
             span_idx = idx-num_schema_leafs

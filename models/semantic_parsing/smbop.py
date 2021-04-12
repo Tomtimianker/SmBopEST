@@ -267,7 +267,7 @@ class SmbopParser(Model):
         self._action_dim = agenda_encoder.get_output_dim()
         self.d_frontier = d_frontier
         self._agenda_size = agenda_size
-        self.n_schema_leafs = 15
+        self.n_schema_leafs = 18
 
         self.tokenizer = TokenIndexer.by_name("pretrained_transformer")(model_name="Salesforce/grappa_large_jnt")._allennlp_tokenizer.tokenizer
 
@@ -595,6 +595,7 @@ class SmbopParser(Model):
         major = None,
         minor = None,
         utt_len = None,
+        num_leafs = None,
     ):
         
         total_start = time.time()
@@ -650,13 +651,12 @@ class SmbopParser(Model):
             num_values = 10
             ######################
             #TREECOPY
-            # TODO: Need to add the tree copy logic (As we get previous values for free).
             # Get the correct spans (from gold values if in train, or from previous work if in eval).
             # Add these span scores to the previously calculated values, so that they will be selected in the top k leafs we start constructing trees on.
             # Note that these selections won't affect the loss calculated as it is determined by the start_logits, end_logits which I don't touch.
             # We raise the top number of values to 15 (from 10) so that this forcing won't hurt the model.
             # Hashing will be done automatically for us.
-            prev_gold_span = self.get_prev_gold_span(prev_gold_span)
+            prev_gold_span = prev_gold_span if self.training else self.get_prev_gold_span(major, minor)
             if prev_gold_span is not None:
                 prev_gold_span = torch.nn.functional.pad(prev_gold_span, # padding to make sure size is ok. vlidate this is actually needed.
                         pad=(0, delta, 0, delta),
@@ -737,12 +737,10 @@ class SmbopParser(Model):
 
         ######################
         #TREECOPY
-        # TODO: Need to add the tree copy logic (As we get previous values for free).
         # Get the correct schema leafs (from gold values if in train, or from previous work if in eval).
         # Add these leaf scores to the previously calculated values, so that they will be selected in the top k leafs we start constructing trees on.
         # Hashing will be done automatically for us.
-        max_leaf_num = self.n_schema_leafs
-        prev_gold_leaf = self.get_prev_gold_leaf(prev_gold_leaf)
+        prev_gold_leaf = prev_gold_leaf if self.training else self.get_prev_gold_leaf(major, minor)
         if prev_gold_leaf is not None:
             prev_gold_leaf = torch.nn.functional.pad(
                     prev_gold_leaf,
@@ -754,14 +752,13 @@ class SmbopParser(Model):
                 prev_gold_leaf.bool().unsqueeze(-1), ai2_util.max_value_of_dtype(final_leaf_schema_scores.dtype)
             )
             # enlarge the starting set so we will not kick out good schema constants:
-            max_leaf_num = self.n_schema_leafs + 3
         ######################
 
         final_leaf_schema_scores = final_leaf_schema_scores.masked_fill(
             ~schema_mask.bool().unsqueeze(-1), ai2_util.min_value_of_dtype(final_leaf_schema_scores.dtype)
         )
         
-        min_k = torch.clamp(schema_mask.sum(-1), 0, max_leaf_num)
+        min_k = torch.clamp(schema_mask.sum(-1), 0, self.n_schema_leafs)
         _, leaf_schema_mask, top_agenda_indices = util.masked_topk(final_leaf_schema_scores.squeeze(-1),
                                                             mask=schema_mask.bool(),k=min_k)
 
@@ -953,7 +950,8 @@ class SmbopParser(Model):
                 span_hash = span_hash,
                 utt_len = utt_len,
                 major = major,
-                minor = minor
+                minor = minor,
+                num_leafs = num_leafs
             )
             return outputs
 
@@ -1044,7 +1042,25 @@ class SmbopParser(Model):
                 try:
                     items = kwargs["item_list"][:(top_idx//self._agenda_size)+2]
                     
-                    tree_res = node_util.reconstruct_tree(self._op_names,self.binary_op_count, b,top_idx%self._agenda_size,items,len(items)-1,self.n_schema_leafs)
+                    #TREECOPY
+                    # Added logic to reconstruct tree to automatically monitor the schema leafs used in this tree.
+                    # we will just need to cache the returned value.
+                    chosen_leaf_mask = np.zeros(kwargs["num_leafs"][b])
+                    tree_res = node_util.reconstruct_tree(self._op_names,self.binary_op_count, b, top_idx%self._agenda_size, items, len(items)-1, self.n_schema_leafs, chosen_leaf_mask)
+
+                    # cache the schema leafs that are predicted in this tree to be used in following queries.
+                    self.prev_leaf_cache[kwargs["major"][b]] = (kwargs["minor"][b], chosen_leaf_mask)
+
+                    # TREECOPY
+                    # TODO: check if better to do like the schema leafs.
+                    # parse output sql so we can pass the predicted leaf values to next phases.
+                    value_list = np.array([self.hash_text(x) for x in get_literals(tree_res)], dtype=np.int64)
+                    is_gold_span = np.isin(kwargs["span_hash"][b].reshape([-1]),value_list).reshape([kwargs["utt_len"][b], kwargs["utt_len"][b]])
+                    predicted_spans = ArrayField(is_gold_span, padding_value=False, dtype=np.bool)
+                    self.prev_span_cache[kwargs["major"][b]] = (kwargs["minor"][b], predicted_spans) # cache the predicted span values.
+
+                    #TREECOPY
+                    #TODO: Add the tree hashes logic here.
 
                     tree_res = node_util.remove_keep(tree_res)
                     # tree_res = self.replacer.post(tree)
@@ -1052,17 +1068,6 @@ class SmbopParser(Model):
                     sql = node_util.print_sql(tree_res)
                     sql = node_util.fix_between(sql)
                     sql = sql.replace("LIMIT value","LIMIT 1")
-                    # TREECOPY
-                    # parse output sql so we can pass the predicted leaf values to next phases.
-                    value_list = np.array([self.hash_text(x) for x in get_literals(tree_res)], dtype=np.int64)
-                    is_gold_span = np.isin(kwargs["span_hash"][b].reshape([-1]),value_list).reshape([kwargs["utt_len"][b], kwargs["utt_len"][b]])
-                    predicted_spans = ArrayField(is_gold_span, padding_value=False, dtype=np.bool)
-                    kwargs["major"][b] = (kwargs["minor"][b], predicted_spans) # cache the predicted span values.
-                    # get the schema leafs that are predicted in this tree.
-                    leafs = list(set(node_util.get_leafs(tree_res)))
-
-
-
                     
                 except:
                     print("damn")
@@ -1313,14 +1318,40 @@ class SmbopParser(Model):
 
     # TODO: Add gold span logic for evaluation
     #TREECOPY
-    def get_prev_gold_span(self, prev_is_gold_span):
-        return prev_is_gold_span if self.training else None
-    
+    def get_prev_gold_span(self, major, minor):
+        # get the previously predicted values and artificially create a batch.
+        return self.create_batch(major, minor, self.prev_span_cache).astype(bool)
+
     # TODO: Add gold leaf logic for evaluation
     #TREECOPY
-    def get_prev_gold_leaf(self, prev_gold_leaf):
-        return prev_gold_leaf if self.training else None
+    def get_prev_gold_leaf(self, major, minor):
+        # get the previously predicted values and artificially create a batch.
+        return self.create_batch(major, minor, self.prev_leaf_cache)
 
+#TREECOPY
+# create a batch of numpy arrays based on the items in current batch
+def create_batch(major, minor, cache):
+    spans = []
+    # get the previously predicted leafs for each example in batch
+    for maj, mi in zip(major, minor):
+        if minor == 0:
+            spans.append(np.zeros(1))
+        else:
+            prev_minor, single_prev_is_gold_span = cache[maj]
+            assert prev_minor == mi - 1
+            spans.append(single_prev_is_gold_span)
+    # stack the samples in the sequence and pad them all to the same length
+    return stack_padding(spans)
     
+# Stacks vectors 
+def stack_padding(it):
+    def resize(row, size):
+        new = np.array(row)
+        new.resize(size)
+        return new
+    # find longest row length
+    row_length = max(it, key=len).__len__()
+    mat = np.array( [resize(row, row_length) for row in it] )
+    return mat    
 
 

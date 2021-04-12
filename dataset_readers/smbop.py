@@ -410,10 +410,9 @@ class SmbopDatasetReader(DatasetReader):
         fields["leaf_types"] = ArrayField(
             entities_as_leafs_types, padding_value=self._type_dict["nan"], dtype=np.int32
             )
-
-        # TREECOPY
-        # if self.is_dev:
-        #    fields["entities_as_leafs"] = 
+        
+        if self.is_dev:
+            fields["num_leafs"] = LabelField(len(entities_as_leafs_types), skip_indexing = True)
         
         if has_gold:
             leaf_indices, is_gold_leaf, depth = self.is_gold_leafs(tree_obj, leafs, schema_size, entities_as_leafs)

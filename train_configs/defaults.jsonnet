@@ -210,7 +210,7 @@ local dataset_reader_name = "sparc-naive";
     // TODO: create a custom data loader, or batch sampler that can make sure that all batches contain elements for which all dependancies have been fulfilled
     // #TREECOPY
     "batch_size" : 20,
-    "shuffle": true,
+    "shuffle": false,
   },
   "trainer": {
     "grad_norm": misc_params.grad_norm,
