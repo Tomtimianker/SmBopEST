@@ -1002,7 +1002,7 @@ class SmbopParser(Model):
                     if isinstance(is_gold_leaf_idx, int):
                         is_gold_leaf_idx = [is_gold_leaf_idx]
                     if not isinstance(top_agenda_indices_el, list):
-                        top_agenda_indices_el = top_agenda_indices_el.tolist()
+                        top_agenda_indices_el = [top_agenda_indices_el]
                     leaf_acc = int(
                         all([x in top_agenda_indices_el for x in is_gold_leaf_idx])
                     )
