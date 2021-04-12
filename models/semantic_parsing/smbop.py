@@ -991,13 +991,16 @@ class SmbopParser(Model):
                 final_beam_acc_list.append(bool(acc))
 
         if not self.training:
-            
-            
-            if kwargs['is_gold_leaf'] is not None  and kwargs['top_agenda_indices'] is not None:
+
+            if kwargs['is_gold_leaf'] is not None and kwargs['top_agenda_indices'] is not None:
                 for top_agenda_indices_el, is_gold_leaf_el in zip(
-                    kwargs["top_agenda_indices"], kwargs["is_gold_leaf"]
+                        kwargs["top_agenda_indices"], kwargs["is_gold_leaf"]
                 ):
                     is_gold_leaf_idx = is_gold_leaf_el.nonzero().squeeze().tolist()
+                    print(f'is_gold_leaf_idx: {is_gold_leaf_idx}')
+                    print(f'top_agenda_indices_el: {top_agenda_indices_el}')
+                    if isinstance(is_gold_leaf_idx, int):
+                        is_gold_leaf_idx = [is_gold_leaf_idx]
                     leaf_acc = int(
                         all([x in top_agenda_indices_el for x in is_gold_leaf_idx])
                     )
@@ -1036,20 +1039,17 @@ class SmbopParser(Model):
                 outputs["total_time"] = [kwargs['total_time']]
 
                 if hash_gold_tree is not None:
-                    try:
-                        reranker_acc = int(
-                            kwargs["agenda_hash_tensor"][b][top_idx]== int(hash_gold_tree[b])
-                        )
+                    reranker_acc = int(
+                        kwargs["agenda_hash_tensor"][b][top_idx] == int(hash_gold_tree[b])
+                    )
 
-                        gold_sql = kwargs["gold_sql"][b]
-                        db_id = kwargs["db_id"][b]
-                        spider_acc = int(
-                            self._evaluate_func(
-                                gold_sql, sql, db_id
-                            )
+                    gold_sql = kwargs["gold_sql"][b]
+                    db_id = kwargs["db_id"][b]
+                    spider_acc = int(
+                        self._evaluate_func(
+                            gold_sql, sql, db_id
                         )
-                    except:
-                        print("fuck")
+                    )
 
                 reranker_acc_list.append(reranker_acc)
                 self._reranker_acc(reranker_acc)

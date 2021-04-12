@@ -85,6 +85,7 @@ def get_schema(db):
     """
 
     schema = {}
+    print(db)
     conn = sqlite3.connect(db)
     cursor = conn.cursor()
 
@@ -116,6 +117,8 @@ def get_schema_from_json(fpath):
 def tokenize(string):
     string = str(string)
     string = string.replace("\'", "\"")  # ensures all string values wrapped by "" problem??
+    string = string.replace('\"s', "\'s")
+    string = string.replace('\"t', "\'t")
     quote_idxs = [idx for idx, char in enumerate(string) if char == '"']
     assert len(quote_idxs) % 2 == 0, "Unexpected quote"
 
@@ -548,15 +551,40 @@ def load_data(fpath):
 
 
 def get_sql(schema, query):
+    # This part is due to WikiSQL column name change
+    query = wiki_change_back_column_names(query)
     toks = tokenize(query)
     tables_with_alias = get_tables_with_alias(schema.schema, toks)
     _, sql = parse_sql(toks, 0, tables_with_alias, schema)
-
     return sql
 
+
+def wiki_change_back_column_names(query):
+    """
+    Converts query columns to be the same as in DB (which are not indicative).
+    i.e. `nationality_col_2` -> `col2`
+
+    Args:
+        query: The SQL query with the detailed col name
+
+    Returns:
+        SQL query with the DB's column name
+    """
+    final_string = []
+    for word in query.split(" "):
+        split_word = word.split('_')
+        if len(split_word) > 1 and split_word[-2] == 'col':
+            final_string.append(f'col{split_word[-1].replace(")", "")}')
+        else:
+            final_string.append(word)
+    return ' '.join(final_string)
 
 def skip_semicolon(toks, start_idx):
     idx = start_idx
     while idx < len(toks) and toks[idx] == ";":
         idx += 1
     return idx
+
+if __name__ == '__main__':
+    query = "SELECT capital__exonym__col_1 FROM table_1_1008653_1 WHERE capital__endonym__col_3 = 'St. John's'"
+    tokenize(query)

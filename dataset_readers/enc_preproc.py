@@ -75,7 +75,7 @@ PUNKS = set(a for a in string.punctuation)
 
 class EncPreproc:
     # def __init__(self) -> None:
-    def __init__(self,tables_file,dataset_path, include_table_name_in_column, fix_issue_16_primary_keys, qq_max_dist, cc_max_dist, tt_max_dist):
+    def __init__(self, tables_file,dataset_path, include_table_name_in_column, fix_issue_16_primary_keys, qq_max_dist, cc_max_dist, tt_max_dist):
         self._tables_file = tables_file
         self._dataset_path = dataset_path
         self.include_table_name_in_column = include_table_name_in_column
@@ -140,13 +140,13 @@ class EncPreproc:
         print("before load_trees")
         self.schemas, self.eval_foreign_key_maps = self.load_tables([self._tables_file])
         print("before connecting")
+        sqlite_path = Path('/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/wikisql_dataset/train.db')
+        source: sqlite3.Connection
+        with sqlite3.connect(sqlite_path) as source:
+            dest = sqlite3.connect(":memory:")
+            dest.row_factory = sqlite3.Row
+            source.backup(dest)
         for db_id, schema in self.schemas.items():
-            sqlite_path = Path(self._dataset_path) / db_id / f"{db_id}.sqlite"
-            source: sqlite3.Connection
-            with sqlite3.connect(sqlite_path) as source:
-                dest = sqlite3.connect(":memory:")
-                dest.row_factory = sqlite3.Row
-                source.backup(dest)
             schema.connection = dest
             
     def get_desc(self, tokenized_utterance, db_id):
@@ -158,7 +158,9 @@ class EncPreproc:
             orig_schema=self.schemas[db_id].orig,
         )
         
-        return self.preprocess_item(item, "train")        
+        return self.preprocess_item(item, "train")
+
+
     def compute_relations(
         self, desc, enc_length, q_enc_length, c_enc_length, c_boundaries, t_boundaries
     ):
@@ -557,7 +559,7 @@ class EncPreproc:
         def db_word_match(word, column, table, db_conn):
             # return False #fixme
             cursor = db_conn.cursor()
-            word = word.replace("'","")
+            word = word.replace("'", "")
             p_str = (
                 f"select {column} from {table} where {column} like '{word} %' or {column} like '% {word}' or "
                 f"{column} like '% {word} %' or {column} like '{word}'"
@@ -598,6 +600,8 @@ class EncPreproc:
                     if column.type in ["number", "time"]:  # TODO fine-grained date
                         num_date_match[f"{q_id},{col_id}"] = column.type.upper()
                 else:
+                    # print(column.table.orig_name)
+                    # print(column.orig_name)
                     ret = db_word_match(
                         word,
                         column.orig_name,
