@@ -15,7 +15,7 @@ class SparcNaiveDatasetReader(SmbopDatasetReader):
             keep_if_unparsable: bool = True,
             tables_file: str = None,
             dataset_path: str = "dataset/database",
-            cache_directory: str = "cache/train",
+            cache_directory: str = "cache-big-bird/train",
             include_table_name_in_column=True,
             fix_issue_16_primary_keys=False,
             qq_max_dist=2,

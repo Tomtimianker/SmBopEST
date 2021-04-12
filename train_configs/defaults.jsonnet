@@ -54,9 +54,7 @@ local large_setting = {
   grad_acum ::  misc_params.grad_acum,
   model_name :: "google/bigbird-roberta-large",
   pretrained_embedding_dim :: 1024,
-  cache_path ::  if misc_params.value_pred then "cache/exp200" else "cache/exp304_no_values", 
-  
-
+  cache_path ::  if misc_params.value_pred then "cache-big-bird/exp200" else "cache-big-bird/exp304_no_values", 
 };
 local max_instances = if misc_params.tiny_dataset then 400 else null;
 
