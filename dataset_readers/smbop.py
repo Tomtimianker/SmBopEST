@@ -61,7 +61,7 @@ class SmbopDatasetReader(DatasetReader):
         keep_if_unparsable: bool = True,
         tables_file: str = None,
         dataset_path: str = "dataset/database",
-        cache_directory: str = "cache/train",
+        cache_directory: str = "cache-big-bird/train",
         include_table_name_in_column=True,
         fix_issue_16_primary_keys=False,
         qq_max_dist=2,
@@ -194,7 +194,7 @@ class SmbopDatasetReader(DatasetReader):
         return enumerate(json_obj)
 
     def _read_examples_file(self, file_path: str):
-        cache_dir = os.path.join("cache", file_path.split("/")[-1])
+        cache_dir = os.path.join("cache-big-bird", file_path.split("/")[-1])
 
         cnt = 0
         time_dict = {}

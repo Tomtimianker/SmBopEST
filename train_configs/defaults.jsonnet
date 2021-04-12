@@ -52,7 +52,7 @@ local large_setting = {
   batch_size :: misc_params.batch_size,
   rat_layers :: misc_params.rat_layers,
   grad_acum ::  misc_params.grad_acum,
-  model_name :: "Salesforce/grappa_large_jnt",
+  model_name :: "google/bigbird-roberta-large",
   pretrained_embedding_dim :: 1024,
   cache_path ::  if misc_params.value_pred then "cache/exp200" else "cache/exp304_no_values", 
   

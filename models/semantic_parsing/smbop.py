@@ -262,7 +262,7 @@ class SmbopParser(Model):
         self._agenda_size = agenda_size
         self.n_schema_leafs = 15
 
-        self.tokenizer = TokenIndexer.by_name("pretrained_transformer")(model_name="Salesforce/grappa_large_jnt")._allennlp_tokenizer.tokenizer
+        self.tokenizer = TokenIndexer.by_name("pretrained_transformer")(model_name="google/bigbird-roberta-large")._allennlp_tokenizer.tokenizer
 
         if not self.cntx_reranker:
             self._noreranker_cntx_linear = torch.nn.Linear(
@@ -1092,13 +1092,7 @@ class SmbopParser(Model):
 
     def emb_q(self,enc):
         pad_dim = enc['tokens']['mask'].size(-1)
-        if pad_dim>512:
-            for key in enc['tokens'].keys():
-                enc['tokens'][key] = enc['tokens'][key][:,:512]
-
-            embedded_utterance_schema = self._question_embedder(enc)
-        else:
-            embedded_utterance_schema = self._question_embedder(enc)
+        embedded_utterance_schema = self._question_embedder(enc)
 
         return embedded_utterance_schema
 
