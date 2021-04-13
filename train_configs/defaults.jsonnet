@@ -52,7 +52,7 @@ local large_setting = {
   batch_size :: misc_params.batch_size,
   rat_layers :: misc_params.rat_layers,
   grad_acum ::  misc_params.grad_acum,
-  model_name :: "google/bigbird-roberta-large",
+  model_name :: "allenai/longformer-large-4096",
   pretrained_embedding_dim :: 1024,
   cache_path ::  if misc_params.value_pred then "cache-big-bird/exp200" else "cache-big-bird/exp304_no_values", 
 };
