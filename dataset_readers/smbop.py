@@ -36,7 +36,6 @@ from dataset_readers.enc_preproc import *
 import dataset_readers.disamb_sql as disamb_sql
 
 
-
 def get_literals(tree):
     value_list = []
     func = lambda x: hasattr(x,"val") and (isinstance(x.val,int) or isinstance(x.val,float))
@@ -201,13 +200,6 @@ class SmbopDatasetReader(DatasetReader):
     def _read_examples_file(self, file_path: str):
         cache_dir = os.path.join("cache", file_path.split("/")[-1])
         cnt = 0
-
-        # Build cache for golden trees for all of the previous examples in this session.
-        # This is done by keeping an array of all the previous trees in this session (as there can be at most 6).
-        # Once we start reading from an example in a different interaction, we free current trees.
-        current_major = None
-        tree_cache = [None] * 6
-
         with open(file_path, "r") as data_file:
             json_obj = json.load(data_file)
             for total_cnt, ex in self.enumerate_json(json_obj):
@@ -310,7 +302,7 @@ class SmbopDatasetReader(DatasetReader):
         # if this is the first interaction in sequence, clear history regarding previous results (used in tree coping)
         if minor == 0 or major != prev_major:
             prev_gold_span = None # will fix as empty array later.
-            prev_gold_leaf = ArrayField(np.full(1, 0), padding_value=0, dtype=np.int32)
+            prev_gold_leaf = ArrayField(np.zeros(1), padding_value=0, dtype=np.int32)
             prev_major = major
 
         # add sample metadata (Number of session and place in interaction to this example) #TREECOPY
@@ -429,16 +421,17 @@ class SmbopDatasetReader(DatasetReader):
                 "depth": ArrayField(depth,padding_value=0,dtype=np.int32)
             })
             #TREECOPY
-            fields["prev_gold_leaf"] = prev_gold_leaf
-            prev_gold_leaf = fields["is_gold_leaf"]
+            if not self.is_dev:
+                fields["prev_gold_leaf"] = prev_gold_leaf
+                prev_gold_leaf = fields["is_gold_leaf"]
 
 
         utt_len = len(tokenized_utterance[1:-1])
         if self.value_pred:
             span_hash_array = self.hash_spans(tokenized_utterance)
-        
+            fields["span_hash"] = ArrayField(span_hash_array, padding_value=-1, dtype=np.int64)
+
             if self.is_dev:
-                fields["span_hash"] = ArrayField(span_hash_array, padding_value=-1, dtype=np.int64)
                 fields["utt_len"] = LabelField(utt_len, skip_indexing = True)
 
         if has_gold and self.value_pred:

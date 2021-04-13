@@ -659,8 +659,9 @@ class SmbopParser(Model):
             # Hashing will be done automatically for us.
             prev_gold_span = prev_gold_span if self.training else self.get_prev_gold_span(major, minor)
             if prev_gold_span is not None:
-                prev_gold_span = torch.nn.functional.pad(prev_gold_span, # padding to make sure size is ok. vlidate this is actually needed.
-                        pad=(0, delta, 0, delta),
+                prev_delta = final_span_scores.shape[-1]-prev_gold_span.shape[-1]
+                prev_gold_span = torch.nn.functional.pad(prev_gold_span,
+                        pad=(0, prev_delta, 0, prev_delta),
                         mode="constant",
                         value=0,
                     )
@@ -752,7 +753,6 @@ class SmbopParser(Model):
             final_leaf_schema_scores = final_leaf_schema_scores.masked_fill(
                 prev_gold_leaf.bool().unsqueeze(-1), ai2_util.max_value_of_dtype(final_leaf_schema_scores.dtype)
             )
-            # enlarge the starting set so we will not kick out good schema constants:
         ######################
 
         final_leaf_schema_scores = final_leaf_schema_scores.masked_fill(
@@ -1324,13 +1324,13 @@ class SmbopParser(Model):
     #TREECOPY
     def get_prev_gold_span(self, major, minor):
         # get the previously predicted values and artificially create a batch.
-        return self.create_batch(major, minor, self.prev_span_cache).astype(bool)
+        return create_batch(major, minor, self.prev_span_cache).astype(bool)
 
     # TODO: Add gold leaf logic for evaluation
     #TREECOPY
     def get_prev_gold_leaf(self, major, minor):
         # get the previously predicted values and artificially create a batch.
-        return self.create_batch(major, minor, self.prev_leaf_cache)
+        return create_batch(major, minor, self.prev_leaf_cache)
 
 #TREECOPY
 # create a batch of numpy arrays based on the items in current batch
