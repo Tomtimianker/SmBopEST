@@ -13,7 +13,7 @@ from allennlp.data.fields import (
 import anytree
 from anytree.search import *
 from collections import defaultdict
-
+import traceback
 
 from overrides import overrides
 from time import time
@@ -241,6 +241,7 @@ class SmbopDatasetReader(DatasetReader):
                         print(e.message)
                     else:
                         print(e)
+                    traceback.print_exc()
                     print('*\n'*5)
                     continue
 

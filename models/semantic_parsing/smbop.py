@@ -259,6 +259,7 @@ class SmbopParser(Model):
         # Used for evaluation, where we use the model's output as hints for the next interactions in same sequence.
         self.prev_span_cache = dict()
         self.prev_leaf_cache = dict()
+        self.prev_hash_cache = dict()
 
         self._experiment_name = experiment_name
         self._misc_params = misc_params
@@ -1355,21 +1356,22 @@ class SmbopParser(Model):
     # create a batch of numpy arrays based on the items in current batch
     def create_batch(self, major, minor, cache, square = False, pad_value = 0):
         spans = []
+        dummy_dims = 1 if pad_value == 0 else (self._decoder_timesteps + 1,1)
         # get the previously predicted leafs for each example in batch
         for maj, mi in zip(major, minor):
             maj = maj.item()
             mi = mi.item()
             if mi == 0 or maj not in cache:
-                spans.append(np.full(1, pad_value))
+                spans.append(np.full(dummy_dims, pad_value))
                 if mi != 0:
                     print(f'cache miss major:{maj}, minor {mi}')
             else:
                 prev_minor, single = cache.pop(maj)
                 if prev_minor != mi - 1:
-                    single = np.full(1, pad_value)
+                    single = np.full(dummy_dims, pad_value)
                 spans.append(single)
         # stack the samples in the sequence and pad them all to the same length
-        resize_function = resize_zeros if pad_value == 0 else resize_minus
+        batch_function = stack_padding if pad_value == 0 else stack_minus
         return torch.from_numpy(stack_padding(spans, square)).to(self._device)
 
     # copy of the smbop datareader _init_fields method. Modified to use the current hasher, and let go of the current tree.
@@ -1391,11 +1393,11 @@ class SmbopParser(Model):
         return hash_gold_levelorder
     
 # Stacks vectors 
-def stack_padding(it, resize_function, square = False):
+def stack_padding(it, square = False):
     # find longest row length
     row_length = max(it, key=len).__len__()
     pad_size = (row_length, row_length) if square else row_length
-    mat = np.array( [resize_function(row, pad_size) for row in it] )
+    mat = np.array( [resize_zeros(row, pad_size) for row in it] )
     return mat
 
 def resize_zeros(row, size):
@@ -1403,8 +1405,18 @@ def resize_zeros(row, size):
     new.resize(size, refcheck=False)
     return new
 
+def stack_minus(it, square = False):
+    row_length = max(it, key=multi_dim_len)[0].__len__()
+    pad_size = (it[0].shape[0], row_length)
+    mat = np.array( [resize_minus(m, pad_size) for m in it] )
+    return mat
+
 def resize_minus(row, size):
     new = np.full(size, fill_value= -1)
     new[0:row.shape[0], 0:row.shape[1]] = row
     return new
-    
+
+def multi_dim_len(item):
+    return len(item[0])
+
+

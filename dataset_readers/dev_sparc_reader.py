@@ -92,6 +92,7 @@ class SparcDevNaiveDatasetReader(SmbopDatasetReader):
                 else:
                     cache[i + minor * 30].append(example)
         # check we didn't leave any items behind
-        for example in cache.items():
-            yield i, example[1]
-            i += 1
+        for examples in cache.items():
+            for example in examples[1]:
+                yield i, example
+                i += 1
