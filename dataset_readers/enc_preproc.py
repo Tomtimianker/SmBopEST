@@ -140,7 +140,10 @@ class EncPreproc:
         print("before load_trees")
         self.schemas, self.eval_foreign_key_maps = self.load_tables([self._tables_file])
         print("before connecting")
-        sqlite_path = Path('/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/wikisql_dataset/train.db')
+        if tables_file.split('/')[-1].split('_')[0] == 'train':
+            sqlite_path = Path('/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/wikisql_dataset/train.db')
+        else:
+            sqlite_path = Path('/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/wikisql_dataset/dev.db')
         source: sqlite3.Connection
         with sqlite3.connect(sqlite_path) as source:
             dest = sqlite3.connect(":memory:")

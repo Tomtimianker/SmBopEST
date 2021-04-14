@@ -986,6 +986,8 @@ class SmbopParser(Model):
         tree_list = []
         if hash_gold_tree is not None:
             for gs, fa in zip(hash_gold_tree, agenda_hash.tolist()):
+                print(f"gs: {gs}")
+                print(f"fa: {fa}")
                 acc = int(gs) in fa
                 self._final_beam_acc(int(acc))
                 final_beam_acc_list.append(bool(acc))
@@ -1004,6 +1006,7 @@ class SmbopParser(Model):
                     leaf_acc = int(
                         all([x in top_agenda_indices_el for x in is_gold_leaf_idx])
                     )
+                    print(leaf_acc)
                     logging.info(leaf_acc)
                     leaf_acc_list.append(leaf_acc)
                     self._leafs_acc(leaf_acc)

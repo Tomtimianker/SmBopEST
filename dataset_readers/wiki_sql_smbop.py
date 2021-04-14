@@ -158,6 +158,15 @@ class SmbopDatasetReader(DatasetReader):
         self.hasher = node_util.Hasher("cpu")
 
     def _init_fields(self, tree_obj):
+        """
+        Function receives tree_obj (The tree created from the query) and does the following steps:
+        1. Makes the tree a uniform depth by adding "keep" levels
+        2. Adds hashes to each leaf and unique node (which is not "keep"). The "keep" nodes inherit their child's hash.
+        3. Makes a list of each level and its hashes. If a level has less than the max number of hashes, it fills it with -1 to have them all of the same length
+
+        Returns the list from 3 (hash_gold_levelorder)
+                and the hash of the tree (hash_gold_tree)
+        """
         tree_obj = node_util.add_max_depth_att(tree_obj)
         tree_obj = node_util.tree2maxdepth(tree_obj)
         tree_obj = self.hasher.add_hash_att(tree_obj, self._type_dict)
@@ -239,6 +248,9 @@ class SmbopDatasetReader(DatasetReader):
                 if ins is not None:
                     yield ins
                 
+                ## DEBUG!!!! #####
+                if total_cnt >100:
+                    break
         # with open(f"{cache_dir}/time_per_example.json", "w") as outfile:
         #         json.dump(time_dict, outfile)
 
