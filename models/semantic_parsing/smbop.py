@@ -1049,19 +1049,19 @@ class SmbopParser(Model):
                     # we will just need to cache the returned value.
                     is_tree_last_in_session = kwargs["interaction_length"][b] == kwargs["minor"][b] + 1
                     chosen_leaf_mask = np.zeros(kwargs["num_leafs"][b]) if not is_tree_last_in_session else None # No need to calculate for last tree
-                    tree_res = node_util.reconstruct_tree(self._op_names,self.binary_op_count, b, top_idx%self._agenda_size, items, len(items)-1, self.n_schema_leafs, chosen_leaf_mask)
+                    chosen_spans_mask = np.zeros([kwargs["utt_len"][b], kwargs["utt_len"][b]]) if not is_tree_last_in_session else None # No need to calculate for last tree
+                    
+                    tree_res = node_util.reconstruct_tree(self._op_names,self.binary_op_count, b, top_idx%self._agenda_size, items, len(items)-1, self.n_schema_leafs, chosen_leaf_mask, chosen_spans_mask)
 
+                    #TREECOPY
+                    # Added logic to reconstruct tree to automatically monitor the schema leafs and spans used in this tree.
+                    # we will just need to cache the returned value.
                     if not is_tree_last_in_session:
                         # cache the schema leafs that are predicted in this tree to be used in following queries.
-                        self.prev_leaf_cache[kwargs["major"][b]] = (kwargs["minor"][b], chosen_leaf_mask)
-
-                        # TREECOPY
-                        # TODO: check if better to do like the schema leafs.
-                        # parse output sql so we can pass the predicted leaf values to next phases.
-                        value_list = np.array([self.hash_text(x) for x in get_literals(tree_res)], dtype=np.int64)
-                        is_gold_span = np.isin(kwargs["span_hash"][b].reshape([-1]),value_list).reshape([kwargs["utt_len"][b], kwargs["utt_len"][b]])
-                        predicted_spans = ArrayField(is_gold_span, padding_value=False, dtype=np.bool)
-                        self.prev_span_cache[kwargs["major"][b]] = (kwargs["minor"][b], predicted_spans) # cache the predicted span values.
+                        maj = kwargs["major"][b].item()
+                        mi = kwargs["minor"][b].item()
+                        self.prev_leaf_cache[maj] = (mi, chosen_leaf_mask)
+                        self.prev_span_cache[maj] = (mi, chosen_spans_mask) # cache the predicted span values.
 
                         #TREECOPY
                         #TODO: Add the tree hashes logic here.
@@ -1324,41 +1324,44 @@ class SmbopParser(Model):
     #TREECOPY
     def get_prev_gold_span(self, major, minor):
         # get the previously predicted values and artificially create a batch.
-        return create_batch(major, minor, self.prev_span_cache).astype(bool)
+        return self.create_batch(major, minor, self.prev_span_cache, square = True).bool()
 
     # TODO: Add gold leaf logic for evaluation
     #TREECOPY
     def get_prev_gold_leaf(self, major, minor):
         # get the previously predicted values and artificially create a batch.
-        return create_batch(major, minor, self.prev_leaf_cache)
+        return self.create_batch(major, minor, self.prev_leaf_cache)
 
-#TREECOPY
-# create a batch of numpy arrays based on the items in current batch
-def create_batch(major, minor, cache):
-    spans = []
-    # get the previously predicted leafs for each example in batch
-    for maj, mi in zip(major, minor):
-        if minor == 0 or maj not in cache:
-            spans.append(np.zeros(1))
-            if maj not in cache:
-                print(f'cache miss major:{maj}, minor {mi}')
-        else:
-            prev_minor, single_prev_is_gold_span = cache.pop(maj)
-            if prev_minor != mi - 1:
-                single_prev_is_gold_span = np.zeros(1)
-            spans.append(single_prev_is_gold_span)
-    # stack the samples in the sequence and pad them all to the same length
-    return stack_padding(spans)
+    #TREECOPY
+    # create a batch of numpy arrays based on the items in current batch
+    def create_batch(self, major, minor, cache, square = False):
+        spans = []
+        # get the previously predicted leafs for each example in batch
+        for maj, mi in zip(major, minor):
+            maj = maj.item()
+            mi = mi.item()
+            if mi == 0 or maj not in cache:
+                spans.append(np.zeros(1))
+                if mi != 0:
+                    print(f'cache miss major:{maj}, minor {mi}')
+            else:
+                prev_minor, single_prev_is_gold_span = cache.pop(maj)
+                if prev_minor != mi - 1:
+                    single_prev_is_gold_span = np.zeros(1)
+                spans.append(single_prev_is_gold_span)
+        # stack the samples in the sequence and pad them all to the same length
+        return torch.from_numpy(stack_padding(spans, square)).to(self._device)
     
 # Stacks vectors 
-def stack_padding(it):
+def stack_padding(it, square = False):
     def resize(row, size):
         new = np.array(row)
-        new.resize(size)
+        new.resize(size, refcheck=False)
         return new
     # find longest row length
     row_length = max(it, key=len).__len__()
-    mat = np.array( [resize(row, row_length) for row in it] )
+    pad_size = (row_length, row_length) if square else row_length
+    mat = np.array( [resize(row, pad_size) for row in it] )
     return mat    
 
 

@@ -278,7 +278,7 @@ def fix_between(inp):
     inp = re.sub(r"LIKE '([\s|\S]+?)'", r"LIKE '%\1%'", inp)
     return inp
 
-def reconstruct_tree(op_names, binary_op_count, batch_el, idx, items, cnt, num_schema_leafs, chosen_leaf_mask = None):
+def reconstruct_tree(op_names, binary_op_count, batch_el, idx, items, cnt, num_schema_leafs, chosen_leaf_mask = None, chosen_spans_mask = None):
     type_data = int(items[cnt].curr_type[batch_el][idx])
     # tuple_el = [op_names[type_data]]
     tuple_el = Node(op_names[type_data])
@@ -287,13 +287,13 @@ def reconstruct_tree(op_names, binary_op_count, batch_el, idx, items, cnt, num_s
             l_idx = items[cnt].l_child_idx[batch_el][idx]
             r_idx = items[cnt].r_child_idx[batch_el][idx]
 
-            l_child = reconstruct_tree(op_names,binary_op_count,batch_el,l_idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask)
-            r_child = reconstruct_tree(op_names,binary_op_count,batch_el,r_idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask)
+            l_child = reconstruct_tree(op_names,binary_op_count,batch_el,l_idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask, chosen_spans_mask)
+            r_child = reconstruct_tree(op_names,binary_op_count,batch_el,r_idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask, chosen_spans_mask)
             # tuple_el.append([l_child,r_child])
             tuple_el.children = [l_child,r_child]
         else:
             idx = items[cnt].l_child_idx[batch_el][idx]
-            child = reconstruct_tree(op_names,binary_op_count,batch_el,idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask)
+            child = reconstruct_tree(op_names,binary_op_count,batch_el,idx,items,cnt-1,num_schema_leafs, chosen_leaf_mask, chosen_spans_mask)
             # tuple_el.append([child])
             tuple_el.children = [child]
     else: 
@@ -310,6 +310,8 @@ def reconstruct_tree(op_names, binary_op_count, batch_el, idx, items, cnt, num_s
             enc_tokens = items[cnt].enc["tokens"]['token_ids'][batch_el][1:].tolist()
             start_id = items[cnt].span_start_indices[batch_el][span_idx]
             end_id = items[cnt].span_end_indices[batch_el][span_idx]
+            if chosen_spans_mask is not None:
+                chosen_spans_mask[start_id, end_id] = 1
             tuple_el.val = items[cnt].tokenizer.decode(enc_tokens[start_id:end_id+1]).strip()
     return tuple_el
 
