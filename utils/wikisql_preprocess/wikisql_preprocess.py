@@ -132,7 +132,7 @@ def wiki_2_spider_tables(wiki_tables_path: Path, prefix: str):
             output_dict['column_names'] = [[-1, '*']]
             output_dict['column_names'].extend([[0, format_column_name(column_name, i) ] for i, column_name in enumerate(table_dict.get('header'))])
             output_dict['column_names_original'] = output_dict['column_names']
-            output_dict['column_types'] = table_dict.get('types')
+            output_dict['column_types'] = ['text'] + (table_dict.get('types'))
             output_dict['table_names'] = [table_id_2_name(table_dict.get('id'))]
             output_dict['table_names_original'] = output_dict['table_names']
             output_dict['db_id'] = prefix + '_' + output_dict['table_names'][0]
