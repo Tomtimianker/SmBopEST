@@ -150,6 +150,9 @@ class SmbopDatasetReader(DatasetReader):
             for total_cnt, ex in enumerate(json_obj):
                 total_start = time.time()
 
+                if total_cnt > 100:
+                    break
+
                 if total_cnt == self._max_instances:
                     break
                 sql = None

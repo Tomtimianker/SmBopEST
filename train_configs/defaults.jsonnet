@@ -64,14 +64,14 @@ local max_instances = if misc_params.tiny_dataset then 400 else null;
 
 local devset_config = {
   cache_suffix :: "val", 
-  data_suffix :: "dev.json",
+  data_suffix :: "geo_to_run_data_dev2.json",
   limit_instances_val :: if misc_params.load_less then 200 else -1,
   limit_instances :: if misc_params.load_less then 200 else -1,
   
 };
 local trainset_config = {
   cache_suffix :: "train",
-  data_suffix :: "geo_to_run_data1.json",
+  data_suffix :: "geo_to_run_data_train2.json",
   limit_instances :: -1,
   limit_instances_val :: -1,
 };
