@@ -395,7 +395,7 @@ class SmbopDatasetReader(DatasetReader):
         fields["entities"] = MetadataField(entities_as_leafs)
         fields["orig_entities"] = MetadataField(orig_entities)
 
-        entities_as_leafs_hash, entities_as_leafs_types = self.hash_schema(entities_as_leafs,added_values)
+        entities_as_leafs_hash, entities_as_leafs_types = self.hash_schema(entities_as_leafs, added_values)
 
         fields["leaf_hash"] = ArrayField(
             entities_as_leafs_hash, padding_value=-1, dtype=np.int64
@@ -508,13 +508,16 @@ class SmbopDatasetReader(DatasetReader):
     def hash_schema(self, leaf_text,added_values=None):
         agenda_hash = []
         agenda_types = []
-
         for leaf in leaf_text:
             leaf = leaf.strip()
             #TODO: fix this
-            if (len(leaf.split(".")) == 2) or ("*" == leaf) or leaf in added_values:
+            if len(leaf.split(".")) == 2:
+                leaf_node = Node("Value", val=leaf.split(".")[-1])
+                type_ = self._type_dict["Value"]
+            elif ("*" == leaf) or leaf in added_values:
                 leaf_node = Node("Value", val=leaf)
                 type_ = self._type_dict["Value"]
+
             else:
                 leaf_node = Node("Table", val=leaf)
                 type_ = self._type_dict["Table"]
