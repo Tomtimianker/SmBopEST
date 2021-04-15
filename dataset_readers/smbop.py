@@ -299,13 +299,11 @@ class SmbopDatasetReader(DatasetReader):
         #TREECOPY
         global prev_gold_span
         global prev_gold_leaf
-        global prev_hash_levels
         global prev_major
         # if this is the first interaction in sequence, clear history regarding previous results (used in tree coping)
         if minor == 0 or major != prev_major:
             prev_gold_span = None # will fix as empty array later.
             prev_gold_leaf = ArrayField(np.zeros(1), padding_value=0, dtype=np.int32)
-            prev_hash_levels = None
             prev_major = major
 
         # add sample metadata (Number of session and place in interaction to this example) #TREECOPY
@@ -362,11 +360,6 @@ class SmbopDatasetReader(DatasetReader):
                 "gold_sql" : MetadataField(sql_with_values),
                 "tree_obj": MetadataField(tree_obj),
             })
-
-            if not self.is_dev:
-                # enrich each example with previous gold hash trees.
-                fields["prev_hash_levels"] = prev_hash_levels if prev_hash_levels is not None else ArrayField(np.zeros_like(hash_gold_levelorder), padding_value=-1, dtype=np.int64)
-                prev_hash_levels = fields["hash_gold_levelorder"]
             
         desc = self.enc_preproc.get_desc(tokenized_utterance,db_id)
         entities, added_values, relation = self.extract_relation(desc)

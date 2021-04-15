@@ -259,7 +259,6 @@ class SmbopParser(Model):
         # Used for evaluation, where we use the model's output as hints for the next interactions in same sequence.
         self.prev_span_cache = dict()
         self.prev_leaf_cache = dict()
-        self.prev_hash_cache = dict()
 
         self._experiment_name = experiment_name
         self._misc_params = misc_params
@@ -598,7 +597,6 @@ class SmbopParser(Model):
         utt_len = None,
         num_leafs = None,
         interaction_length = None,
-        prev_hash_levels = None
     ):
         
         total_start = time.time()
@@ -637,11 +635,6 @@ class SmbopParser(Model):
         )
         if hash_gold_levelorder is not None:
             new_hash_gold_levelorder = hash_gold_levelorder.sort()[0].transpose(0,1)
-
-        # Copy the logic used with the hash gold levelorder for the prev level order:
-        prev_hash_levels = prev_hash_levels if self.training else self.get_prev_hash_levels(major, minor)
-        if prev_hash_levels is not None:
-            sorted_prev_hash_levels = prev_hash_levels.sort()[0].transpose(0,1)
         
         # Logic to determine which spans in the utterance contain values to be included in query.
         if self.value_pred:
@@ -845,17 +838,6 @@ class SmbopParser(Model):
 
                 unique_frontier_scores = unique_frontier_scores.masked_fill(
                     is_levelorder_list.bool(), ai2_util.max_value_of_dtype(unique_frontier_scores.dtype)
-                )
-
-            #TREECOPY
-            # Artificialy boost scores for previously predicted trees from the previous interactions
-            if sorted_prev_hash_levels is not None:
-                # gather indices for previously used trees.
-                with torch.no_grad():
-                        is_in_prev_levelorder_list = frontier_utils.new_isin(sorted_prev_hash_levels[decoding_step + 1], frontier_hash)
-                # boost scores for these trees.
-                unique_frontier_scores = unique_frontier_scores.masked_fill(
-                    is_in_prev_levelorder_list.bool(), ai2_util.max_value_of_dtype(unique_frontier_scores.dtype)
                 )
 
             agenda_scores, agenda_mask, agenda_idx = util.masked_topk(unique_frontier_scores,mask=frontier_mask.bool(),k=self._agenda_size)
@@ -1077,10 +1059,6 @@ class SmbopParser(Model):
                         mi = kwargs["minor"][b].item()
                         self.prev_leaf_cache[maj] = (mi, chosen_leaf_mask)
                         self.prev_span_cache[maj] = (mi, chosen_spans_mask) # cache the predicted span values.
-
-                        # create the hash levels for the trees and cache them
-                        hash_levels = self.hash_tree(tree_res) # make sure that this does not modify the tree itself.
-                        self.prev_hash_cache[maj] = (mi, hash_levels)
 
                     tree_res = node_util.remove_keep(tree_res)
                     # tree_res = self.replacer.post(tree)
