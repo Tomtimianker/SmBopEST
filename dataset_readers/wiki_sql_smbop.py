@@ -249,8 +249,8 @@ class SmbopDatasetReader(DatasetReader):
                     yield ins
                 
                 ## DEBUG!!!! #####
-                if total_cnt >100:
-                    break
+                # if total_cnt >100:
+                #     break
         # with open(f"{cache_dir}/time_per_example.json", "w") as outfile:
         #         json.dump(time_dict, outfile)
 

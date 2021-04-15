@@ -857,14 +857,22 @@ def build_foreign_key_map_from_json(table):
 
 
 def evaluate_single(g_str, p_str, db_id, db_dir,  table_file):
-
-    print(db_dir)
-    kmaps = build_foreign_key_map_from_json(table_file)
-    evaluator = Evaluator()
-    db = db_dir
-    schema = Schema(get_schema(db))
-    g_sql = get_sql(schema, g_str)
-
+    try:
+        db_dir = '/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/dataset/database/train/train.db'
+        print(db_dir)
+        kmaps = build_foreign_key_map_from_json(table_file)
+        evaluator = Evaluator()
+        db = db_dir
+        schema = Schema(get_schema(db))
+        g_sql = get_sql(schema, g_str)
+    except:
+        db_dir = '/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/dataset/database/dev/dev.db'
+        print(db_dir)
+        kmaps = build_foreign_key_map_from_json(table_file)
+        evaluator = Evaluator()
+        db = db_dir
+        schema = Schema(get_schema(db))
+        g_sql = get_sql(schema, g_str)
     try:
         p_sql = get_sql(schema, p_str)
     except:
