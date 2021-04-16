@@ -78,7 +78,7 @@ local trainset_config = {
 
 
 
-local dataset_path = "dataset/";
+local dataset_path = "dataset/scholar";
 # Tom: The place where the data should be.
 
 
@@ -135,7 +135,7 @@ local dataset_reader_name = "smbop";
     "limit_instances" : setting.limit_instances_val,
     "value_pred":misc_params.value_pred,
   },
-  "train_data_path": dataset_path + "train_spider.json",
+  "train_data_path": dataset_path + "scholar_in_spider_format_train.json",
   "validation_data_path": dataset_path + setting.data_suffix,
 
   "model": {
