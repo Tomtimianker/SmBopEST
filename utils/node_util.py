@@ -911,7 +911,10 @@ def build_sql(tree, peren=True):
         elif tree.name == "Selection":
             if len(tree.children) == 1:
                 return build_sql(tree.children[0])
-            return build_sql(tree.children[1]) + " WHERE " + build_sql(tree.children[0])
+            sql_str = build_sql(tree.children[1])
+            if type(sql_str) != str:
+                sql_str = sql_str['value']
+            return sql_str + " WHERE " + build_sql(tree.children[0])
         else:  # 'Selection'/'Groupby'/'Limit'/Having'
             return (
                 build_sql(tree.children[1])
