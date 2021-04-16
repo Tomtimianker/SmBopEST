@@ -269,7 +269,7 @@ class SmbopParser(Model):
         self._agenda_size = agenda_size
         self.n_schema_leafs = 18
 
-        self.tokenizer = TokenIndexer.by_name("pretrained_transformer")(model_name="Salesforce/grappa_large_jnt")._allennlp_tokenizer.tokenizer
+        self.tokenizer = TokenIndexer.by_name("pretrained_transformer")(model_name="allenai/longformer-large-4096")._allennlp_tokenizer.tokenizer
 
         if not self.cntx_reranker:
             self._noreranker_cntx_linear = torch.nn.Linear(
