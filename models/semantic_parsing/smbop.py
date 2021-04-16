@@ -1137,9 +1137,9 @@ class SmbopParser(Model):
 
     def emb_q(self,enc):
         pad_dim = enc['tokens']['mask'].size(-1)
-        if pad_dim>512:
+        if pad_dim>1024:
             for key in enc['tokens'].keys():
-                enc['tokens'][key] = enc['tokens'][key][:,:512]
+                enc['tokens'][key] = enc['tokens'][key][:,:1024]
 
             embedded_utterance_schema = self._question_embedder(enc)
         else:
