@@ -135,7 +135,7 @@ local dataset_reader_name = "smbop";
     "limit_instances" : setting.limit_instances_val,
     "value_pred":misc_params.value_pred,
   },
-  "train_data_path": dataset_path + "geo_to_run_data1.json",
+  "train_data_path": dataset_path + "geo_to_run_data_train2.json",
   "validation_data_path": dataset_path + setting.data_suffix,
 
   "model": {
