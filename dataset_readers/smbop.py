@@ -170,7 +170,7 @@ class SmbopDatasetReader(DatasetReader):
                         sql_with_values = disamb_sql.sanitize(ex["query"])
                     except Exception as e:
                         # there are two examples in the train set that are wrongly formatted, skip them
-                        print(f"error with {ex['query']}")
+                        print(f"error with 2 {ex['query']}")
                         continue
 
                 ins = self.text_to_instance(

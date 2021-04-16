@@ -34,7 +34,7 @@ def validateSQLtoIR(evaluation_function):
                     sql_with_values = disamb_sql.sanitize(ex["query"])
                 except Exception as e:
                     # there are two examples in the train set that are wrongly formatted, skip them
-                    print(f"error with {ex['query']}")
+                    print(f"error with 1 {ex['query']}")
                     continue
             # Convert to IR - copied from dataset_readers\smbop.py text_to_instance
             try:
