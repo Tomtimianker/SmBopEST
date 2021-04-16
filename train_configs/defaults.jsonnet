@@ -78,7 +78,7 @@ local trainset_config = {
 
 
 
-local dataset_path = "dataset/scholar";
+local dataset_path = "dataset/scholar/";
 # Tom: The place where the data should be.
 
 
