@@ -101,7 +101,7 @@ local dataset_reader_name = "smbop";
 {
   "dataset_reader": {
     "type": dataset_reader_name,
-    "tables_file": dataset_path + "tables.json",
+    "tables_file": dataset_path + "scholar_table.json",
     "dataset_path": dataset_path + "database",
     "lazy": false,
     "question_token_indexers":{
@@ -126,7 +126,7 @@ local dataset_reader_name = "smbop";
               
             },
       },
-    "tables_file": dataset_path + "tables.json",
+    "tables_file": dataset_path + "scholar_table.json",
     "dataset_path": dataset_path + "database",
     "cache_directory": setting.cache_path + setting.cache_suffix,
     "lazy": false,
