@@ -358,6 +358,7 @@ def get_leafs(tree):
             elif "literal" in y.val:
                 s = y.val["literal"]
             else:
+                print("TOM: ######################### HERE 1 ##################################")
                 print(y.val)
                 print(y)
                 print(print_tree(tree))
@@ -368,6 +369,7 @@ def get_leafs(tree):
             s = y.val  # TODO: fixme
             # s = str(y.val)
         else:
+            print("TOM: @@@@@@@@@@@@@@@@@@@@@@ HERE 2 @@@@@@@@@@@@@@@@@@@@@@@@2222")
             print(y.val)
             print(y)
             print(y.parent.name)
