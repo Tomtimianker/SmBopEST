@@ -632,6 +632,10 @@ def agg_check(in_dict):
                 val1, val2 = in_dict[agg_type][sec_agg_type]
                 agg_check(val1).parent = sec_agg_node
                 agg_check(val2).parent = sec_agg_node
+            elif sec_agg_type in ["count", "sum", "max"]:
+                sec_agg_node = Node(sec_agg_type, parent=agg_type_node, n_type="Agg")
+                sec_agg_node.val = in_dict[agg_type][sec_agg_type]
+                sec_agg_node.parent = agg_type_node
             else:
                 raise Exception
         else:
@@ -879,11 +883,14 @@ def build_sql(tree, peren=True):
                 + " ASC"
             )
         elif tree.name == "Project":
+            sql_str = build_sql(tree.children[1])
+            if type(sql_str) != str:
+                sql_str = sql_str['value']
             return (
-                "SELECT "
-                + build_sql(tree.children[0])
-                + " FROM "
-                + build_sql(tree.children[1])
+                    "SELECT "
+                    + build_sql(tree.children[0])
+                    + " FROM "
+                    + sql_str
             )
         # elif tree.name == 'Join_on':
         #     tree = tree.children[0]
