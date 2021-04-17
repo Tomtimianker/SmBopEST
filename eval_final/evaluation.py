@@ -878,7 +878,7 @@ if __name__ == "__main__":
 
 
 
-def evaluate_single(g_str, p_str, db_id, db_dir,  table_file):
+def evaluate_single(g_str, p_str, db_id, db_dir, table_file):
 
     kmaps = build_foreign_key_map_from_json(table_file)
     evaluator = Evaluator()
