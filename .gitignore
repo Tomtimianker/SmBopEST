@@ -12,3 +12,9 @@ __pycache__
 exec_sparc_concat_output.txt
 .vscode/launch.json
 .vscode/settings.json
+copy-output.txt
+exec-output.txt
+hist.png
+smbop-treecopy.err
+smbop-treecopy.out
+smbop.slurm
