@@ -596,7 +596,7 @@ class SmbopParser(Model):
         minor = None,
         utt_len = None,
         num_leafs = None,
-        interaction_length = None,
+        interaction_length = None
     ):
         
         total_start = time.time()
@@ -836,6 +836,9 @@ class SmbopParser(Model):
                     vector_loss += loss_tensor.squeeze().sum(-1)
                     tree_sizes_vector += is_levelorder_list.bool().squeeze().sum(-1)
 
+                # so we won't pick more multiple items with the same encoding
+                if self.uniquify:
+                    is_levelorder_list = is_levelorder_list * unique_ids_list
                 unique_frontier_scores = unique_frontier_scores.masked_fill(
                     is_levelorder_list.bool(), ai2_util.max_value_of_dtype(unique_frontier_scores.dtype)
                 )
@@ -1059,6 +1062,9 @@ class SmbopParser(Model):
                         mi = kwargs["minor"][b].item()
                         self.prev_leaf_cache[maj] = (mi, chosen_leaf_mask)
                         self.prev_span_cache[maj] = (mi, chosen_spans_mask) # cache the predicted span values.
+
+                        #TREECOPY
+                        #TODO: Add the tree hashes logic here.
 
                     tree_res = node_util.remove_keep(tree_res)
                     # tree_res = self.replacer.post(tree)
@@ -1314,87 +1320,48 @@ class SmbopParser(Model):
             # out['self._spider_acc._count'] = self._spider_acc._count
         return out
 
+    # TODO: Add gold span logic for evaluation
     #TREECOPY
-    # Gets the previously predicted values and artificially creates a batch.
     def get_prev_gold_span(self, major, minor):
+        # get the previously predicted values and artificially create a batch.
         return self.create_batch(major, minor, self.prev_span_cache, square = True).bool()
 
+    # TODO: Add gold leaf logic for evaluation
     #TREECOPY
-    # Gets the previously predicted schema leafs and artificially creates a batch.
     def get_prev_gold_leaf(self, major, minor):
+        # get the previously predicted values and artificially create a batch.
         return self.create_batch(major, minor, self.prev_leaf_cache)
 
     #TREECOPY
-    # Gets the hashes for the sub-trees of the previously predicted tree and artificially creates a batch.
-    def get_prev_hash_levels(self, major, minor):
-        return self.create_batch(major, minor, self.prev_hash_cache, square = True, pad_value = -1)
-        
-
-    #TREECOPY
     # create a batch of numpy arrays based on the items in current batch
-    def create_batch(self, major, minor, cache, square = False, pad_value = 0):
+    def create_batch(self, major, minor, cache, square = False):
         spans = []
-        dummy_dims = 1 if pad_value == 0 else (self._decoder_timesteps + 1,1)
         # get the previously predicted leafs for each example in batch
         for maj, mi in zip(major, minor):
             maj = maj.item()
             mi = mi.item()
             if mi == 0 or maj not in cache:
-                spans.append(np.full(dummy_dims, pad_value))
+                spans.append(np.zeros(1))
                 if mi != 0:
                     print(f'cache miss major:{maj}, minor {mi}')
             else:
-                prev_minor, single = cache.pop(maj)
+                prev_minor, single_prev_is_gold_span = cache.pop(maj)
                 if prev_minor != mi - 1:
-                    single = np.full(dummy_dims, pad_value)
-                spans.append(single)
+                    single_prev_is_gold_span = np.zeros(1)
+                spans.append(single_prev_is_gold_span)
         # stack the samples in the sequence and pad them all to the same length
-        batch_function = stack_padding if pad_value == 0 else stack_minus
         return torch.from_numpy(stack_padding(spans, square)).to(self._device)
-
-    # copy of the smbop datareader _init_fields method. Modified to use the current hasher, and let go of the current tree.
-    def hash_tree(self, tree_obj):
-        tree_obj = node_util.add_max_depth_att(tree_obj)
-        tree_obj = node_util.tree2maxdepth(tree_obj)
-        tree_obj = self.hasher.add_hash_att(tree_obj, self._type_dict)
-        hash_gold_levelorder = []
-        for tree_list in LevelOrderGroupIter(tree_obj):
-            hash_gold_levelorder.append([tree.hash for tree in tree_list])
-        pad_el = hash_gold_levelorder[0]
-        for i in range(self._decoder_timesteps - len(hash_gold_levelorder) + 2):
-            hash_gold_levelorder.insert(0, pad_el)
-        hash_gold_levelorder = hash_gold_levelorder[::-1]
-        max_size = max(len(level) for level in hash_gold_levelorder)
-        for level in hash_gold_levelorder:
-            level.extend([-1]*(max_size-len(level)))
-        hash_gold_levelorder = np.array(hash_gold_levelorder)
-        return hash_gold_levelorder
     
 # Stacks vectors 
 def stack_padding(it, square = False):
+    def resize(row, size):
+        new = np.array(row)
+        new.resize(size, refcheck=False)
+        return new
     # find longest row length
     row_length = max(it, key=len).__len__()
     pad_size = (row_length, row_length) if square else row_length
-    mat = np.array( [resize_zeros(row, pad_size) for row in it] )
-    return mat
-
-def resize_zeros(row, size):
-    new = np.array(row)
-    new.resize(size, refcheck=False)
-    return new
-
-def stack_minus(it, square = False):
-    row_length = max(it, key=multi_dim_len)[0].__len__()
-    pad_size = (it[0].shape[0], row_length)
-    mat = np.array( [resize_minus(m, pad_size) for m in it] )
-    return mat
-
-def resize_minus(row, size):
-    new = np.full(size, fill_value= -1)
-    new[0:row.shape[0], 0:row.shape[1]] = row
-    return new
-
-def multi_dim_len(item):
-    return len(item[0])
+    mat = np.array( [resize(row, pad_size) for row in it] )
+    return mat    
 
 
