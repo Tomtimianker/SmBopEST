@@ -357,6 +357,8 @@ def get_leafs(tree):
                 s = y.val["value"]
             elif "literal" in y.val:
                 s = y.val["literal"]
+            elif "distinct" in y.val:
+                s = y.val["distinct"]
             else:
                 print("TOM: ######################### HERE 1 ##################################")
                 print(y.val)
