@@ -246,7 +246,7 @@ class SmbopParser(Model):
         tree_rep_transformer: Seq2SeqEncoder,
         utterance_augmenter: Seq2SeqEncoder,
         agenda_summarizer: Seq2SeqEncoder,
-        decoder_timesteps=9,
+        decoder_timesteps=13,
         agenda_size=30,
         d_frontier = 50,
         misc_params=None,

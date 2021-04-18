@@ -57,7 +57,7 @@ class SmbopDatasetReader(DatasetReader):
     def __init__(self, lazy: bool = True, question_token_indexers: Dict[str, TokenIndexer] = None,
                  keep_if_unparsable: bool = True, tables_file: str = None, dataset_path: str = "dataset/database",
                  cache_directory: str = "cache/train", include_table_name_in_column=True, fix_issue_16_primary_keys=False,
-                 qq_max_dist=2, cc_max_dist=2, tt_max_dist=2, max_instances=None, decoder_timesteps=9, limit_instances=-1,
+                 qq_max_dist=2, cc_max_dist=2, tt_max_dist=2, max_instances=None, decoder_timesteps=13, limit_instances=-1,
                  value_pred=True,
                  # **kwargs,
                  ):
