@@ -898,7 +898,7 @@ def build_sql(tree, peren=True):
                 for child in tree.children
             ]
             res = table_tups[0][0]
-            seen_tables = set(res)
+            seen_tables = {res}
             for (first, sec), child in zip(table_tups, tree.children):
                 tab = first if sec in seen_tables else sec
                 res += (

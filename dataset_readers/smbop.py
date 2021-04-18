@@ -210,7 +210,7 @@ class SmbopDatasetReader(DatasetReader):
                     x.fields["depth"] = ArrayField(
                         np.array([1] * max_depth), padding_value=0, dtype=np.int32
                     )
-                if x.fields["depth"].array.shape[0] > 9:
+                if x.fields["depth"].array.shape[0] > 13:
                     continue
                 if i != self.limit_instances:
                     yield x
