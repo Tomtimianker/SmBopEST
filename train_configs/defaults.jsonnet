@@ -144,7 +144,7 @@ local dataset_reader_name = "smbop";
     "d_frontier":d_frontier,
     "agenda_size" : stringToInt("agenda_size"),
      
-    "decoder_timesteps" : 13,
+    "decoder_timesteps" : 12,
     "misc_params": misc_params,
     "question_embedder": {
         "token_embedders":{
