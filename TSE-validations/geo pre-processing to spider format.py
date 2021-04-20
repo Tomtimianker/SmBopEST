@@ -1,5 +1,6 @@
 import json
-import tokenize
+from dataset_readers.disamb_sql import tokenize
+
 
 with open('Geo files/geography.json') as f:
     geo_data = json.load(f)
