@@ -61,7 +61,6 @@ def is_two_phrases_in_list(phrase1, phrase2, lst):
         if len(lst) != 2:
             return -1
     except:
-        print(f'len(lst) went wrong. lst is {lst}')
         return -1
     return ((lst[0] == phrase1 and lst[1] == phrase2) or (lst[0] == phrase2 and lst[1] == phrase1))
 
@@ -184,7 +183,6 @@ def build_query(from_clause, where_clause):
 
 def remove_as_from_query(query):
     as_indices = [i for i, w in enumerate(query) if w == "AS"]
-    print(query)
     if len(as_indices) == 0:
         return " ".join(query)
 
