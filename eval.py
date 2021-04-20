@@ -35,7 +35,7 @@ import json
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--archive_path', type=str, default="../experiments/randy-lemon-gar")
-    parser.add_argument('--dev_path', type=str, default='dataset/scholar/scholar_in_spider_format_dev.json')
+    parser.add_argument('--dev_path', type=str, default='dataset/scholar/scholar_in_spider_format_test.json')
     parser.add_argument('--table_path', type=str, default='dataset/scholar/scholar_table.json')
     parser.add_argument('--dataset_path', type=str, default='dataset/scholar/database')
     parser.add_argument('--output', type=str,default="predictions_with_vals_scholar.txt")
