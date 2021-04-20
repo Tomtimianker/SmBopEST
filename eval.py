@@ -7,7 +7,7 @@ import pathlib
 import random
 from allennlp.data.vocabulary import Vocabulary
 from modules.relation_transformer import *
-from training.callbacks import *
+# from training.callbacks import *
 import json
 from allennlp.common import Params
 from models.semantic_parsing.smbop import SmbopParser
