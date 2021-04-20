@@ -36,7 +36,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--archive_path', type=str, default="experiments/homey-copper-budgerigar_batch_size7")
     parser.add_argument('--dev_path', type=str, default='dataset/geo/geo_to_run_data_test2.json')
-    parser.add_argument('--table_path', type=str, default='dataset/scholar/tables.json')
+    parser.add_argument('--table_path', type=str, default='dataset/geo/tables.json')
     parser.add_argument('--dataset_path', type=str, default='dataset/geo/database')
     parser.add_argument('--output', type=str,default="predictions_with_vals_geo.txt")
     parser.add_argument('--gpu', type=int,default=0)
