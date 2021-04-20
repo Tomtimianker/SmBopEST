@@ -18,3 +18,16 @@ hist.png
 smbop-treecopy.err
 smbop-treecopy.out
 smbop.slurm
+cache-bad/exp200val/dataset_SLASH_sparc_SLASH_dev.json.lock
+cache-bad/copy_cache/exp200train/dataset_SLASH_sparc_SLASH_train.json
+cache-bad/copy_cache/exp200train/dataset_SLASH_sparc_SLASH_train.json.lock
+cache-bad/copy_cache/exp200val/dataset_SLASH_sparc_SLASH_dev.json
+cache-bad/copy_cache/exp200val/dataset_SLASH_sparc_SLASH_dev.json.lock
+cache-bad/exp200train/dataset_SLASH_sparc_SLASH_train.json
+cache-bad/exp200train/dataset_SLASH_sparc_SLASH_train.json.lock
+cache-bad/exp200val/dataset_SLASH_sparc_SLASH_dev.json
+cache-bad/exp200val/dataset_SLASH_sparc_SLASH_dev.json.lock
+cache-bad/small/exp200train/dataset_SLASH_sparc_SLASH_train.json
+cache-bad/small/exp200train/dataset_SLASH_sparc_SLASH_train.json.lock
+cache-bad/small/exp200val/dataset_SLASH_sparc_SLASH_dev.json
+cache-bad/small/exp200val/dataset_SLASH_sparc_SLASH_dev.json.lock
