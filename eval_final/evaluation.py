@@ -866,13 +866,16 @@ def evaluate_single(g_str, p_str, db_id, db_dir,  table_file):
         schema = Schema(get_schema(db))
         g_sql = get_sql(schema, g_str)
     except:
-        db_dir = '/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/dataset/database/dev/dev.db'
-        print(db_dir)
-        kmaps = build_foreign_key_map_from_json(table_file)
-        evaluator = Evaluator()
-        db = db_dir
-        schema = Schema(get_schema(db))
-        g_sql = get_sql(schema, g_str)
+        try:
+            db_dir = '/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/dataset/database/dev/dev.db'
+            print(db_dir)
+            kmaps = build_foreign_key_map_from_json(table_file)
+            evaluator = Evaluator()
+            db = db_dir
+            schema = Schema(get_schema(db))
+            g_sql = get_sql(schema, g_str)
+        except:
+            return 0
     try:
         p_sql = get_sql(schema, p_str)
     except:
@@ -911,24 +914,23 @@ def evaluate_single(g_str, p_str, db_id, db_dir,  table_file):
 
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--gold', dest='gold', type=str)
-    # parser.add_argument('--pred', dest='pred', type=str)
-    # parser.add_argument('--db', dest='db', type=str)
-    # parser.add_argument('--table', dest='table', type=str)
-    # parser.add_argument('--etype', dest='etype', type=str)
-    # args = parser.parse_args()
-    #
-    # gold = args.gold
-    # pred = args.pred
-    # db_dir = args.db
-    # table = args.table
-    # etype = args.etype
-    #
-    # assert etype in ["all", "exec", "match"], "Unknown evaluation method"
-    #
-    # kmaps = build_foreign_key_map_from_json(table)
-    #
-    #
-    # evaluate(gold, pred, db_dir, etype, kmaps)
-    Schema(get_schema("/Users/orlichter/Documents/School/Extra Courses/NLP/SmBopEST/wikisql_dataset/dev.db"))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gold', dest='gold', type=str)
+    parser.add_argument('--pred', dest='pred', type=str)
+    parser.add_argument('--db', dest='db', type=str)
+    parser.add_argument('--table', dest='table', type=str)
+    parser.add_argument('--etype', dest='etype', type=str)
+    args = parser.parse_args()
+    
+    gold = args.gold
+    pred = args.pred
+    db_dir = args.db
+    table = args.table
+    etype = args.etype
+    
+    assert etype in ["all", "exec", "match"], "Unknown evaluation method"
+    
+    kmaps = build_foreign_key_map_from_json(table)
+    
+    
+    evaluate(gold, pred, db_dir, etype, kmaps)

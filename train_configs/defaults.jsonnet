@@ -78,7 +78,7 @@ local trainset_config = {
 
 
 
-local dataset_path = "/home/orl/Documents/Shani/SmBopEST/wikisql_dataset/Processed/";
+local dataset_path = "/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/wikisql_dataset/Processed/";
 
 
 local d_frontier = 30;
@@ -206,7 +206,7 @@ local dataset_reader_name = "smbop";
     },
   },
   "validation_data_loader": {
-    "batch_size" : 7,
+    "batch_size" : 5,
     "shuffle": true,
   },
   "trainer": {

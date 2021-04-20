@@ -85,49 +85,19 @@ def get_schema(db):
     """
 
     #print(db)
-    try: 
-        schema = {}
-        manual_db_path_train = '/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/dataset/database/train/train.db'
-        conn = sqlite3.connect(manual_db_path_train)
-        cursor = conn.cursor()
+    schema = {}
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
 
-        # fetch table names
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [str(table[0].lower()) for table in cursor.fetchall()]
+    # fetch table names
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = [str(table[0].lower()) for table in cursor.fetchall()]
 
-        # fetch table info
-        for table in tables:
-            cursor.execute("PRAGMA table_info({})".format(table))
-            schema[table] = [str(col[1].lower()) for col in cursor.fetchall()]
-    except Exception as e:
-        try:
-            schema = {}
-            manual_db_path_dev = '/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/dataset/database/dev/dev.db'
-            conn = sqlite3.connect(manual_db_path_dev)
-            cursor = conn.cursor()
-
-            # fetch table names
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-            tables = [str(table[0].lower()) for table in cursor.fetchall()]
-
-            # fetch table info
-            for table in tables:
-                cursor.execute("PRAGMA table_info({})".format(table))
-                schema[table] = [str(col[1].lower()) for col in cursor.fetchall()]
-        except Exception as e:
-            schema = {}
-            manual_db_path_dev = '/specific/netapp5/joberant/home/ohadr/smbop/shani/SmBopEST/dataset/database/dev/dev.db'
-            conn = sqlite3.connect(manual_db_path_dev)
-            cursor = conn.cursor()
-
-            # fetch table names
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-            tables = [str(table[0].lower()) for table in cursor.fetchall()]
-
-            # fetch table info
-            for table in tables:
-                cursor.execute("PRAGMA table_info({})".format(table))
-                schema[table] = [str(col[1].lower()) for col in cursor.fetchall()]    
+    # fetch table info
+    for table in tables:
+        cursor.execute("PRAGMA table_info({})".format(table))
+        schema[table] = [str(col[1].lower()) for col in cursor.fetchall()]
+  
     return schema
 
 
@@ -582,7 +552,7 @@ def load_data(fpath):
 
 def get_sql(schema, query):
     # This part is due to WikiSQL column name change
-    # query = wiki_change_back_column_names(query)
+    query = wiki_change_back_column_names(query)
     toks = tokenize(query)
     tables_with_alias = get_tables_with_alias(schema.schema, toks)
     _, sql = parse_sql(toks, 0, tables_with_alias, schema)
@@ -597,7 +567,7 @@ def wiki_change_back_column_names(query):
     Args:
         query: The SQL query with the detailed col name
 
-    Returns:
+    Returns:5
         SQL query with the DB's column name
     """
     final_string = []

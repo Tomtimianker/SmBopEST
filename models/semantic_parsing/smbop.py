@@ -986,8 +986,6 @@ class SmbopParser(Model):
         tree_list = []
         if hash_gold_tree is not None:
             for gs, fa in zip(hash_gold_tree, agenda_hash.tolist()):
-                print(f"gs: {gs}")
-                print(f"fa: {fa}")
                 acc = int(gs) in fa
                 self._final_beam_acc(int(acc))
                 final_beam_acc_list.append(bool(acc))
